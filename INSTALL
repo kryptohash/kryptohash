@@ -1,0 +1,5 @@
+Building Kryptohash
+
+See doc/build-*.md for instructions on building kryptohashd,
+the intended-for-services, no-graphical-interface, reference
+implementation of Kryptohash.

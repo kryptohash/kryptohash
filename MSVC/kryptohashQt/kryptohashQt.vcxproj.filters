@@ -1,0 +1,610 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="kryptohashqt_plugin_import.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_bitcoin.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\src\qt\forms\aboutdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\addressbookpage.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\askpassphrasedialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\coincontroldialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\editaddressdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\helpmessagedialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\intro.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\openuridialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\optionsdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\overviewpage.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\receivecoinsdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\receiverequestdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\rpcconsole.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\sendcoinsdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\sendcoinsentry.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\signverifymessagedialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\qt\forms\transactiondescdialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\qt\res\images\about.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\add.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\address-book.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\kryptohash.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <CustomBuild Include="..\..\src\qt\kryptohash.qrc">
+      <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <None Include="..\..\src\qt\locale\bitcoin_ach.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_af_ZA.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ar.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_be_BY.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_bg.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_bs.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ca.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ca@valencia.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ca_ES.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_cmn.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_cs.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_cy.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_da.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_de.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_de_AT.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_el_GR.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_en.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_eo.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_es.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_es_CL.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_es_DO.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_es_MX.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_es_UY.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_et.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_eu_ES.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_fa.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_fa_IR.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_fi.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_fr.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_fr_CA.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_gl.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_gu_IN.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_he.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_hi_IN.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_hr.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_hu.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_id_ID.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_it.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ja.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ka.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_kk_KZ.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ko_KR.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ky.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_la.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_lt.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_lv_LV.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ms_MY.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_nb.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_nl.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_pam.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_pl.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_pt_BR.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_pt_PT.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ro_RO.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ru.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sah.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sk.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sl_SI.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sq.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sr.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_sv.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\bitcoin_testnet.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_th_TH.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_tr.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_uk.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_ur_PK.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_uz@Cyrl.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_vi.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_vi_VN.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_zh_CN.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_zh_HK.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\locale\bitcoin_zh_TW.qm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\clock1.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\clock2.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\clock3.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\clock4.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\clock5.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\configure.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\connect0_16.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\connect1_16.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\connect2_16.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\connect3_16.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\connect4_16.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\debugwindow.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\edit.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\editcopy.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\editpaste.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\export.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\filesave.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\history.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\key.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\lock_closed.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\lock_open.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\overview.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\qrcode.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\quit.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\receive.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\remove.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\send.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-000.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-001.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-002.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-003.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-004.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-005.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-006.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-007.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-008.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-009.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-010.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-011.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-012.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-013.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-014.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-015.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-016.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-017.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-018.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-019.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-020.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-021.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-022.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-023.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-024.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-025.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-026.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-027.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-028.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-029.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-030.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-031.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-032.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-033.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\movies\spinner-034.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\images\splash.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\images\splash_testnet.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\synced.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\toolbar.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\toolbar_testnet.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\transaction0.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\transaction2.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\transaction_conflicted.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\tx_inout.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\tx_input.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\tx_mined.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\src\qt\res\icons\tx_output.png">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GeneratedFiles\ui_aboutdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_addressbookpage.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_askpassphrasedialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_coincontroldialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_editaddressdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_helpmessagedialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_intro.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_openuridialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_optionsdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_overviewpage.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_receivecoinsdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_receiverequestdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_rpcconsole.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_sendcoinsdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_sendcoinsentry.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_signverifymessagedialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_transactiondescdialog.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
