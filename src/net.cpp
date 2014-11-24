@@ -1375,13 +1375,18 @@ void ThreadOpenAddedConnections()
                     BOOST_FOREACH(CService& addrNode, *(it)) {
                         if (pnode->addr == addrNode) {
                             it = lservAddressesToAdd.erase(it);
-                            if (!lservAddressesToAdd.empty())
+#ifdef _MSC_VER
+                            if (it != lservAddressesToAdd.begin())
+#endif
                                 it--;
                             break;
                         }
                     }
-                    if (lservAddressesToAdd.empty())
+#ifdef _MSC_VER
+                    if (lservAddressesToAdd.empty()) {
                         break;
+                    }
+#endif
                 }
             }
         }
