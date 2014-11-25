@@ -907,7 +907,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     }
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     string reason;
-    if (/* MainNet() && */ !IsStandardTx(tx, reason)) {  // <-- Add networkID check for final build ***********
+    if (MainNet() && !IsStandardTx(tx, reason)) {
         return state.DoS(0, error("AcceptToMemoryPool : nonstandard transaction: %s", reason), REJECT_NONSTANDARD, reason);
     }
     // is it already in the memory pool?
@@ -967,7 +967,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         }
 
         // Check for non-standard pay-to-script-hash in inputs
-        if (/* MainNet() && */ !AreInputsStandard(tx, view)) { // <-- Add networkID check for final build ***********
+        if (MainNet() && !AreInputsStandard(tx, view)) {
             return error("AcceptToMemoryPool: : nonstandard transaction input");
         }
         // Note: if you modify this code to accept non-standard transactions, then
@@ -1950,7 +1950,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
             const CCoins &coins = inputs.GetCoins(prevout.hash);
 
             // If prev is coinbase, check that it's matured
-            if (coins.IsCoinBase() && chainActive.Height() >= 100) {  // need to remove the >= 100 in final build ***********
+            if (coins.IsCoinBase()) {
                 if (nSpendHeight - coins.nHeight < COINBASE_MATURITY) {
                     return state.Invalid(error("CheckInputs() : tried to spend coinbase at depth %d", nSpendHeight - coins.nHeight), REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
                 }
