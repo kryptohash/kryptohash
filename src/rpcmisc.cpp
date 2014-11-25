@@ -418,18 +418,21 @@ Value verifymessage(const Array& params, bool fHelp)
 
 #ifdef USE_ED25519
     /* Extract the Pubic Key from the payload */
-    vector<unsigned char> vchPubKey(vchPayload.begin() + 68, vchPayload.begin() + 100);
+    vector<unsigned char> vchPubKey;
+    vchPubKey.empty();
+    vchPubKey.push_back(ed25519_pubkey_header);
+    vchPubKey.insert(vchPubKey.end(), vchPayload.begin() + 68, vchPayload.begin() + 100);
     CPubKey pubkey(vchPubKey);
     if (pubkey.GetID() == keyID) {
         /* Extract the ed25519 signature from the payload */
-        vector<unsigned char> vchSig(vchPayload.begin() + 4, vchPayload.begin() + 68);
+        vector<unsigned char> vchSig(vchPayload.begin(), vchPayload.begin() + 68);
         if (pubkey.Verify(ss.GetHash(), vchSig)) {
             return true;
         }
     }
-    else
+    else {
         throw JSONRPCError(RPC_TYPE_ERROR, "Kryptohash address doesn't match public key in signature");
-
+    }
     return false;
 #else
     CPubKey pubkey;
