@@ -1543,7 +1543,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         PRNG_STRUCT rndStruct;
         keccakprng_init(&rndStruct);
         keccakprng_seed(&rndStruct, pindexLast->GetBlockHash().begin(), pindexLast->GetBlockHash().size());
-        rc = keccakprng_seed(&rndStruct, (unsigned char *)prevHeight, sizeof(int64_t));
+        rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
         if (!rc) {
             rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
             if (!rc) {
