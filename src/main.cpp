@@ -1535,6 +1535,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         return pindexLast->nBits;
     }
 
+#if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
     if (MainNet()) {
         // Calculate new random value for the next re-target
         int rc;
@@ -1553,6 +1554,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         // Save random number in the PID class
         PIDctrl.SetRand(rand);
     }
+#endif
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
     assert(pindex);  // It should never happen.
@@ -1654,6 +1656,7 @@ void InitPIDstate(void)
         float nDeltaDiff = 0;
 
         if (pindex != NULL) {
+#if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
             // Calculate the height of the next re-target
             if (MainNet()) {
                 int rc;
@@ -1669,7 +1672,7 @@ void InitPIDstate(void)
                     }
                 }
             }
-
+#endif
             // Go back and collect nTime of the previous interval/2 number of blocks
             int64_t nAverage = pindex->GetBlockTime();
             uint32_t cnt = 1;
