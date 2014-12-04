@@ -85,6 +85,9 @@ const float PIDderivative   = 0.100f;
 
 CPID PIDctrl;
 
+// Diff
+const int64_t nHEIGHT_5000 = 5000;
+
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
@@ -1499,6 +1502,50 @@ unsigned int CalcRetarget(const unsigned int nBits, const float delta)
     return nbits;
 }
 
+//
+// Returns a new target value based on a +/- delta
+//
+unsigned int CalcRetarget2(const unsigned int nBits, const float delta, unsigned int deltaMulInc, unsigned int deltaMulDec)
+{
+    unsigned int nExp = (nBits & 0xFF000000) >> 24;
+    unsigned int nbits = nBits & 0x7FFFFF;
+
+    if (deltaMulInc == 0) {
+        deltaMulInc = 1;
+    }
+
+    if (deltaMulDec == 0) {
+        deltaMulDec = 1;
+    }
+
+    if (delta < 0) {
+        unsigned int nDelta = (unsigned int)(abs(delta)) * 0x100 * deltaMulDec;
+        // check for overflow condition
+        if (nbits + nDelta < 0x800000) {
+            nbits += nDelta;
+        }
+        else {
+            nbits = nbits + nDelta - 0x7F8000;
+            nExp++;
+        }
+    }
+    else if (delta > 0) {
+        unsigned int nDelta = (unsigned int)delta * 0x100 * deltaMulInc;
+        // check for underflow condition
+        if (nbits - nDelta - 0x8000 <= nbits) {
+            nbits -= nDelta;
+        }
+        else {
+            unsigned int value = nDelta - nbits + 0x7fff;
+            nbits = 0x7fffff - (value & 0x7fffff);
+            nExp--;
+        }
+    }
+    nbits |= (nExp << 24);
+
+    return nbits;
+}
+
 unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
     // Genesis block
@@ -1556,6 +1603,14 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
 #endif
 
+    // Use block height to manually change the DeltaMul factor used by CalcRetarget2()
+    unsigned int DeltaMulInc = 1;
+    unsigned int DeltaMulDec = 1;
+    if (pindexLast->nHeight + 1 >= nHEIGHT_5000) {
+        DeltaMulInc = 0x80;
+        DeltaMulDec = 0x10;
+    }
+
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
     assert(pindex);  // It should never happen.
 
@@ -1580,11 +1635,11 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             nbits = myPID.GetDiff();
         }
         else if (myPID.GetDelta()) {
-            nbits = CalcRetarget(pindex->nBits, myPID.GetDelta());
+            nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
         }
         else {
             nDeltaDiff = myPID.PIDCalculate(float(nAverage / 1000));
-            nbits = CalcRetarget(pindex->nBits, nDeltaDiff);
+            nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
     }
     else {
@@ -1601,7 +1656,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             PIDctrl.SetDelta(nDeltaDiff);
             PIDctrl.SetHeight(pindexLast->nHeight);
         }
-        nbits = CalcRetarget(pindex->nBits, nDeltaDiff);
+        nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
     }
 
     CBigNum bnNew;
