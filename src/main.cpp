@@ -3949,6 +3949,16 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             vRecv >> LIMITED_STRING(pfrom->strSubVer, 256);
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.2/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.2, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.3/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.3, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
         if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }
