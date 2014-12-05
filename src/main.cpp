@@ -86,7 +86,8 @@ const float PIDderivative   = 0.100f;
 CPID PIDctrl;
 
 // Diff
-const int64_t nHEIGHT_5000 = 5000;
+static const int64_t nHEIGHT_5000 = 5000;
+static const int64_t nHEIGHT_5200 = 5200;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1606,9 +1607,14 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     // Use block height to manually change the DeltaMul factor used by CalcRetarget2()
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
-    if (pindexLast->nHeight + 1 >= nHEIGHT_5000) {
-        DeltaMulInc = 0x80;
-        DeltaMulDec = 0x10;
+    int64_t currHeight = pindexLast->nHeight + 1;
+    if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5200) {
+        DeltaMulInc = 128;
+        DeltaMulDec = 16;
+    }
+    else if (currHeight >= nHEIGHT_5200) {
+        DeltaMulInc = 10;
+        DeltaMulDec = 1;
     }
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
