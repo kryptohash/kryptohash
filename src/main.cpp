@@ -87,7 +87,7 @@ CPID PIDctrl;
 
 // Diff
 static const int64_t nHEIGHT_5000 = 5000;
-static const int64_t nHEIGHT_5200 = 5200;
+static const int64_t nHEIGHT_5100 = 5100;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1608,12 +1608,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     int64_t currHeight = pindexLast->nHeight + 1;
-    if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5200) {
+    if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
         DeltaMulInc = 128;
         DeltaMulDec = 16;
     }
-    else if (currHeight >= nHEIGHT_5200) {
-        DeltaMulInc = 10;
+    else if (currHeight >= nHEIGHT_5100) {
+        DeltaMulInc = 8;
         DeltaMulDec = 1;
     }
 
@@ -3956,6 +3956,11 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
         }
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.3/") != std::string::npos) {
             LogPrintf("Client %s runs obsolete version 0.3.3, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.4/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.4, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
             return false;
         }
