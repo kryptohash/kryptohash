@@ -1684,6 +1684,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     LogPrintf("GetNextWorkRequiredPID RETARGET at Height: %u\n", pindexLast->nHeight+1);
     LogPrintf("Before: %08x  %s\n", pindexLast->nBits, CBigNum().SetCompact(pindexLast->nBits).getuint320().ToString());
     LogPrintf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint320().ToString());
+    PIDctrl.print();
 
     return bnNew.GetCompact();
 }
@@ -2932,11 +2933,12 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
         }
         // Check timestamp against prev
-        if (block.GetBlockTxTime() <= pindexPrev->GetMedianTxTimePast()) {
+        if (block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
         }
         // Check that all transactions are finalized
-        BOOST_FOREACH(const CTransaction& tx, block.vtx) {
+        BOOST_FOREACH(const CTransaction& tx, block.vtx) 
+        {
             if (!IsFinalTx(tx, nHeight, block.GetBlockTime())) {
                 return state.DoS(10, error("AcceptBlock() : contains a non-final transaction"), REJECT_INVALID, "bad-txns-nonfinal");
             }

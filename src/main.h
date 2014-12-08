@@ -848,40 +848,35 @@ public:
 
     int64_t GetMedianTimePast() const
     {
-        int64_t sum = 0;
-        int i;
+        int64_t pmedian[nMedianTimeSpan];
+        int64_t* pbegin = &pmedian[nMedianTimeSpan];
+        int64_t* pend = &pmedian[nMedianTimeSpan];
 
         const CBlockIndex* pindex = this;
-        for (i = 1; i <= nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
-            sum += pindex->GetBlockTime();
-        
-        return sum/i;
+        for (int i = 0; i < nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
+        {
+            *(--pbegin) = pindex->GetBlockTxTime();
+        }
+        std::sort(pbegin, pend);
+        return pbegin[(pend - pbegin) / 2];
     }
 
     int64_t GetMedianTxTimePast() const
     {
-        int64_t sum = 0;
-        int i;
-
         const CBlockIndex* pindex = this;
-        for (i = 1; i <= nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
-            sum += pindex->GetBlockTxTime();
+        int64_t nAverage = pindex->GetBlockTxTime();
+        uint32_t cnt = 1;
 
-        return sum / i;
-    }
+        // Go back and collect nTxTime of the previous nMedianTimeSpan number of blocks
+        while (pindex->pprev != NULL && cnt < nMedianTimeSpan)
+        {
+            pindex = pindex->pprev;
+            nAverage += pindex->GetBlockTxTime();
+            cnt++;
+        }
+        nAverage /= cnt;
 
-    int64_t GetMedianTimeElapsed() const
-    {
-        int64_t  pmedian[nMedianTimeSpan];
-        int64_t* pbegin = &pmedian[nMedianTimeSpan];
-        int64_t* pend   = &pmedian[nMedianTimeSpan];
-
-        const CBlockIndex* pindex = this;
-        for (int i = 0; i < nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
-            *(--pbegin) = pindex->GetBlockTxTime();
-
-        std::sort(pbegin, pend);
-        return pbegin[(pend - pbegin) / 2];
+        return nAverage;
     }
 
     int64_t GetMedianTime() const;
@@ -1324,6 +1319,21 @@ public:
 
     uint32_t GetDiff(void) const {
         return nBits;
+    }
+
+    std::string ToString() const
+    {
+        std::string str = "CPID(";
+        str += strprintf("SetPoint=%.1f, Proportional=%.3f, Integral=%.3f, Derivative=%.3f, SumError=%.6f, LastError=%.6f, PrevError=%.6f, ",
+                          SetPoint, Proportional, Integral, Derivative, SumError, LastError, PrevError);
+        str += strprintf("Rand=%u, Height=%u, DeltaDiff=%.8f, DiffBits=0x%x\n", nRand, nHeight, nDelta, nBits);
+            
+        return str;
+    }
+
+    void print() const
+    {
+        LogPrintf("%s\n", ToString().c_str());
     }
 };
 

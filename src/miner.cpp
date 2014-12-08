@@ -269,10 +269,16 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             uint320 hash = tx.GetHash();
             UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
 
-            // Find the oldest transaction time. Ignore nTxTime values that are older than the median of the past 10 blocks.
-            // This prevents Diff manipulation.
-            if (tx.nTxTime < pindexPrev->GetMedianTxTimePast()) {
-                minTxTime = pindexPrev->GetMedianTxTimePast();
+            // Find the oldest transaction time. 
+            // Will ignore TXs with nTxTime values that are older than one hour or older than the median
+            // of the past 11 blocks. This is to prevent Diff manipulation by sending low priority TXs
+            // that could take a very long time to get included in a block.
+            int64_t nTxTimePastLimit = pindexPrev->GetMedianTimePast();
+            if (currTime - nTxTimePastLimit > 3600000) {
+                nTxTimePastLimit = currTime - 3600000;
+            }
+            if (tx.nTxTime < nTxTimePastLimit) {
+                minTxTime = nTxTimePastLimit;
             }
             else {
                 minTxTime = min(minTxTime, tx.nTxTime);
