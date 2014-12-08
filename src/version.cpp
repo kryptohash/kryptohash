@@ -38,7 +38,7 @@ const std::string CLIENT_NAME("Kryptohatoshi");
 #define GIT_ARCHIVE 1
 #ifdef GIT_ARCHIVE
 #    define GIT_COMMIT_ID "0"
-#    define GIT_COMMIT_DATE "Fri, 5 Dec 2014 23:59:59 +0000"
+#    define GIT_COMMIT_DATE "Mon, 8 Dec 2014 10:59:59 +0000"
 #endif
 
 #define BUILD_DESC_WITH_SUFFIX(maj,min,rev,build,suffix) \
