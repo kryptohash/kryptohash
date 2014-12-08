@@ -85,9 +85,10 @@ const float PIDderivative   = 0.100f;
 
 CPID PIDctrl;
 
-// Diff
+// Diff algo manual adjustments
 static const int64_t nHEIGHT_5000 = 5000;
 static const int64_t nHEIGHT_5100 = 5100;
+static const int64_t nHEIGHT_5600 = 5600;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1607,14 +1608,18 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     // Use block height to manually change the DeltaMul factor used by CalcRetarget2()
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
+    uint32_t nAveragingCnt = interval / 2;
     int64_t currHeight = pindexLast->nHeight + 1;
     if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
         DeltaMulInc = 128;
         DeltaMulDec = 16;
     }
-    else if (currHeight >= nHEIGHT_5100) {
+    else if (currHeight >= nHEIGHT_5100 && currHeight < nHEIGHT_5600) {
         DeltaMulInc = 8;
-        DeltaMulDec = 1;
+    }
+    else if (currHeight >= nHEIGHT_5600) {
+        DeltaMulInc = 2;
+        nAveragingCnt = interval - 5;  // Will average using the nTime of latest 95 blocks
     }
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
@@ -1624,10 +1629,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     float nDeltaDiff = 0;
     unsigned int nbits = 0;
 
-    // Go back and collect nTime of the previous interval/2 number of blocks
+    // Go back and collect nTime of the previous nAveragingCnt number of blocks
     int64_t nAverage = pindex->GetBlockTime();
     uint32_t cnt = 1;
-    while (pindex->pprev != NULL && cnt < (interval / 2))
+    while (pindex->pprev != NULL && cnt < nAveragingCnt)
     {
         pindex = pindex->pprev;
         nAverage += pindex->GetBlockTime();
@@ -1642,6 +1647,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         }
         else if (myPID.GetDelta()) {
             nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
+        }
+        else if (myPID.GetHeight() < currHeight) {
+            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
+            nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
         else {
             nDeltaDiff = myPID.PIDCalculate(float(nAverage / 1000));
@@ -1734,10 +1743,16 @@ void InitPIDstate(void)
                 }
             }
 #endif
-            // Go back and collect nTime of the previous interval/2 number of blocks
+            int64_t currHeight = nHeight + 1;
+            uint32_t nAveragingCnt = interval / 2;
+            if (currHeight >= nHEIGHT_5600) {
+                nAveragingCnt = interval - 5;
+            }
+
+            // Go back and collect nTime of the previous nAveragingCnt number of blocks
             int64_t nAverage = pindex->GetBlockTime();
             uint32_t cnt = 1;
-            while (pindex->pprev != NULL && cnt < (interval / 2))
+            while (pindex->pprev != NULL && cnt < nAveragingCnt)
             {
                 pindex = pindex->pprev;
                 nAverage += pindex->GetBlockTime();
@@ -1941,6 +1956,11 @@ void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev)
         block.nBits = GetNextWorkRequired(pindexPrev, &block);
     }
 #endif
+}
+
+void UpdateTxTime(CBlockHeader& block, const CBlockIndex* pindexPrev)
+{
+    block.nTxTime = max(pindexPrev->GetMedianTxTimePast() + 1, GetAdjustedTime() * 1000);
 }
 
 void UpdateTimeElapsed(CBlockHeader& block, const CBlockIndex* pindexPrev)
@@ -3949,6 +3969,7 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             vRecv >> LIMITED_STRING(pfrom->strSubVer, 256);
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
+
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.2/") != std::string::npos) {
             LogPrintf("Client %s runs obsolete version 0.3.2, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
@@ -3964,6 +3985,12 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             pfrom->fDisconnect = true;
             return false;
         }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.5/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.5, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+
         if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }

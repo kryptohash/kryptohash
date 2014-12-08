@@ -210,8 +210,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         // Collect transactions into block
         uint64_t nBlockSize = 1000;
         uint64_t nBlockTx = 0;
-        int64_t maxTxTime = 0;
         int64_t currTime = GetAdjustedTime() * 1000; // in Milliseconds
+        int64_t minTxTime = currTime;
         int nBlockSigOps = 100;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
@@ -268,8 +268,15 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             CTxUndo txundo;
             uint320 hash = tx.GetHash();
             UpdateCoins(tx, state, view, txundo, pindexPrev->nHeight+1, hash);
-            // find the newest transaction time. It will be used in the blockheader.
-            maxTxTime = max(maxTxTime, tx.nTxTime);
+
+            // Find the oldest transaction time. Ignore nTxTime values that are older than the median of the past 10 blocks.
+            // This prevents Diff manipulation.
+            if (tx.nTxTime < pindexPrev->GetMedianTxTimePast()) {
+                minTxTime = pindexPrev->GetMedianTxTimePast();
+            }
+            else {
+                minTxTime = min(minTxTime, tx.nTxTime);
+            }
 
             // Added
             pblock->vtx.push_back(tx);
@@ -313,11 +320,11 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         pblocktemplate->vTxFees[0] = -nFees;
 
         // Fill in header
-        if (maxTxTime > 0)
-            pblock->nTxTime = maxTxTime <= currTime ? maxTxTime : currTime;
-        else
-            pblock->nTxTime = currTime;
-        pblock->nTime   = 0;
+
+        // Use the oldest TxTime found in the mempool.
+        pblock->nTxTime = minTxTime;
+        // nTime is the difference between current time and the oldest nTxTime in the mempool.
+        pblock->nTime = currTime - minTxTime;
 #if 0
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
 #else

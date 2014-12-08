@@ -175,6 +175,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
 void InitPIDstate(void);
 void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev);
+void UpdateTxTime(CBlockHeader& block, const CBlockIndex* pindexPrev);
 void UpdateTimeElapsed(CBlockHeader& block, const CBlockIndex* pindexPrev);
 
 /** Create a new block index entry for a given block hash */
