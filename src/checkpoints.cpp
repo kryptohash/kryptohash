@@ -43,11 +43,12 @@ namespace Checkpoints
         (99, uint320("00000018CE97B434F8396CB989C61190BB72B8CD2A7352C48C91AEDB2E0F8AFCE8CDB7A59334E95B"))
         (5000, uint320("0000000BC13E7BCFC9CFB664D4EA05D6732F5FB49DED407DA33E45FE351A5BD3A81F003BFC2096AC"))
         (5098, uint320("0000000853574F2FEEEE8EE642C72D8E1A40DBDFAFD01CC1B8F23EE6EBC565B16EDFF9E336B0DA0F"))
+        (5600, uint320("000000012A064B7393C4A6C6CCD71B52640804A5DD8ABE76FDE35AD12EF00D7FE3DCE691938535DD"))
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
-        0x14A1D085120, // * UNIX timestamp of last checkpoint block
-        12084,         // * total number of transactions between genesis and last checkpoint
+        0x14A283B4E58, // * UNIX timestamp of last checkpoint block
+        13736,         // * total number of transactions between genesis and last checkpoint
                        //   (the tx=... number in the SetBestChain debug.log lines)
         60000.0        // * estimated number of transactions per day after checkpoint
     };
@@ -175,6 +176,7 @@ namespace PIDCheckpoints
     static MapPIDCheckpoints mapPIDCheckpoints =
         boost::assign::map_list_of
         (0, CPID(180.0f, 1.0f, 0.05f, 0.1f))
+        (5600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5599, 180.0f, 0x2507ffff))
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
