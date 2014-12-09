@@ -1624,6 +1624,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         nAveragingCnt = interval - 5;  // Will average using the nTime of latest 95 blocks
     }
     else if (currHeight >= nHEIGHT_5800) {
+        DeltaMulInc = 2;
         nAveragingCnt = interval - 5;
         filterOutliers = true;
     }
@@ -1734,7 +1735,11 @@ void InitPIDstate(void)
 
     LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
     const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(LastPIDCheckpoint);
-    if (chainActive.Genesis() != NULL && PID) {
+    if (chainActive.Height() <= 0 || PID == NULL) {
+        // Init PID with default parameters.
+        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
+    }
+    else {
         // Init PID with parameters stored in the last checkpoint.
         PIDctrl = *PID;
         LastPIDCheckpoint = PIDctrl.GetHeight() + 1;
@@ -1797,12 +1802,6 @@ void InitPIDstate(void)
 	        nHeight += (interval + rand);
 	    }
 	}
-    else {
-        // Init PID with default parameters.
-        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
-        LastPIDCheckpoint = 0;
-    }
-
 }
 
 bool CheckProofOfWork(uint320 hash, unsigned int nBits)
