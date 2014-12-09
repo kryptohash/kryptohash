@@ -3093,7 +3093,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
     if (pcheckpoint && pblock->hashPrevBlock != (chainActive.Tip() ? chainActive.Tip()->GetBlockHash() : uint320(0))) {
         // Extra checks to prevent "fill up memory by spamming with bogus blocks"
-        int64_t deltaTime = pblock->GetBlockTxTime() - pcheckpoint->nTxTime;
+        int64_t deltaTime = pblock->GetBlockTxTime() + 24*60*60*1000 - pcheckpoint->nTxTime; // Allow extra 24 hours since last checkpoint.
         if (deltaTime < 0) {
             return state.DoS(100, error("ProcessBlock() : block with timestamp before last checkpoint"), REJECT_CHECKPOINT, "time-too-old");
         }
