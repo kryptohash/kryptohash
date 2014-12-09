@@ -1676,6 +1676,9 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         }
         else if (myPID.GetHeight() < currHeight) {
             nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
+            // Store the calculated Difficulty and block Height 
+            PIDctrl.SetDelta(nDeltaDiff);
+            PIDctrl.SetHeight(pindexLast->nHeight);
             nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
         else {
@@ -1729,29 +1732,27 @@ void InitPIDstate(void)
         interval = 10;
     }
 
-    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(chainActive.Height());
-    if (PID) {
+    LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
+    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(LastPIDCheckpoint);
+    if (chainActive.Genesis() != NULL && PID) {
         // Init PID with parameters stored in the last checkpoint.
         PIDctrl = *PID;
-    }
-    else {
-        // Init PID with default parameters.
-        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
-        LastPIDCheckpoint = 0;
-    }
+        LastPIDCheckpoint = PIDctrl.GetHeight() + 1;
 
-    int64_t nHeight = interval - 1;
-    if (LastPIDCheckpoint) {
-        // If checkpoint exits, use height of blockchain after last checkpoint retarget
-        nHeight += LastPIDCheckpoint;
-    }
+	    int64_t nHeight = interval - 1;
+	    if (LastPIDCheckpoint) {
+	        // If checkpoint exits, use height of blockchain after last checkpoint retarget
+	        nHeight += LastPIDCheckpoint;
+	    }
+	
+	    while (nHeight < chainActive.Height())
+	    {
+	        float nDeltaDiff = 0;
+            const CBlockIndex *pindex = chainActive[nHeight];
 
-    while (nHeight < chainActive.Height())
-    {
-        const CBlockIndex *pindex = chainActive[nHeight];
-        float nDeltaDiff = 0;
-
-        if (pindex != NULL) {
+            if (pindex == NULL) {
+                break;
+            }
 #if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
             // Calculate the height of the next re-target
             if (MainNet()) {
@@ -1792,9 +1793,16 @@ void InitPIDstate(void)
             PIDctrl.SetRand(rand);
             PIDctrl.SetHeight(nHeight);
             PIDctrl.SetDelta(nDeltaDiff);
-        }
-        nHeight += (interval + rand);
+
+	        nHeight += (interval + rand);
+	    }
+	}
+    else {
+        // Init PID with default parameters.
+        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
+        LastPIDCheckpoint = 0;
     }
+
 }
 
 bool CheckProofOfWork(uint320 hash, unsigned int nBits)

@@ -44,12 +44,12 @@ namespace Checkpoints
         (5000, uint320("0000000BC13E7BCFC9CFB664D4EA05D6732F5FB49DED407DA33E45FE351A5BD3A81F003BFC2096AC"))
         (5098, uint320("0000000853574F2FEEEE8EE642C72D8E1A40DBDFAFD01CC1B8F23EE6EBC565B16EDFF9E336B0DA0F"))
         (5600, uint320("000000012A064B7393C4A6C6CCD71B52640804A5DD8ABE76FDE35AD12EF00D7FE3DCE691938535DD"))
-        (5761, uint320("000000108EDF56540125B3080E88EEDB8B3F1E6DDAB93873698AAABA4ACA98D1DF4C77FDD38D2324"))
+        (5749, uint320("00000001DE53835FEFC5CE5327F18FC4B9A33BEBA538B37CACDBDCE7E100BD6E88809CD449F17B6B"))
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
-        0x14A283B4E58, // * UNIX timestamp of last checkpoint block
-        13736,         // * total number of transactions between genesis and last checkpoint
+        0x14A2D3041E8, // * UNIX timestamp of last checkpoint block
+        14311,         // * total number of transactions between genesis and last checkpoint
                        //   (the tx=... number in the SetBestChain debug.log lines)
         60000.0        // * estimated number of transactions per day after checkpoint
     };
@@ -177,14 +177,13 @@ namespace PIDCheckpoints
     static MapPIDCheckpoints mapPIDCheckpoints =
         boost::assign::map_list_of
         (0, CPID(180.0f, 1.0f, 0.05f, 0.1f))
-        (5600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5599, 180.0f, 0x2507ffff))
-        (5700, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5699, 180.0f, 0x251751ff))
-        (5800, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5799, 180.0f, 0x2507ffff))
-        (6000, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5999, 180.0f, 0x2503ffff))
+        (5600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5599, 108.30000305f, 0x2507ffff))
+        (5700, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5699, 108.30000305f, 0x251751ff))
+        (5800, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5799, 108.30000305f, 0x251995ff))
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
-        0x148d455b42a // * timestamp of last PID checkpoint
+        0x149aba00000 // * timestamp of last PID checkpoint (Must Fix)
     };
 
     static MapPIDCheckpoints mapPIDCheckpointsTestnet =
