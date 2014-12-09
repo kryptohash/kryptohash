@@ -1729,8 +1729,7 @@ void InitPIDstate(void)
         interval = 10;
     }
 
-    LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(LastPIDCheckpoint);
+    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(chainActive.Height());
     if (PID) {
         // Init PID with parameters stored in the last checkpoint.
         PIDctrl = *PID;
