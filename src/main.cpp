@@ -89,6 +89,7 @@ CPID PIDctrl;
 static const int64_t nHEIGHT_5000 = 5000;
 static const int64_t nHEIGHT_5100 = 5100;
 static const int64_t nHEIGHT_5600 = 5600;
+static const int64_t nHEIGHT_5800 = 5800;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1605,7 +1606,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
 #endif
 
-    // Use block height to manually change the DeltaMul factor used by CalcRetarget2()
+    // Use block height to manually change the parameters.
+    bool filterOutliers = false;
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = interval / 2;
@@ -1617,9 +1619,13 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     else if (currHeight >= nHEIGHT_5100 && currHeight < nHEIGHT_5600) {
         DeltaMulInc = 8;
     }
-    else if (currHeight >= nHEIGHT_5600) {
+    else if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
         DeltaMulInc = 2;
         nAveragingCnt = interval - 5;  // Will average using the nTime of latest 95 blocks
+    }
+    else if (currHeight >= nHEIGHT_5800) {
+        nAveragingCnt = interval - 5;
+        filterOutliers = true;
     }
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
@@ -1630,15 +1636,35 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     unsigned int nbits = 0;
 
     // Go back and collect nTime of the previous nAveragingCnt number of blocks
-    int64_t nAverage = pindex->GetBlockTime();
-    uint32_t cnt = 1;
-    while (pindex->pprev != NULL && cnt < nAveragingCnt)
-    {
-        pindex = pindex->pprev;
-        nAverage += pindex->GetBlockTime();
-        cnt++;
+    int64_t nAverage = 0;
+    uint32_t cnt = 0;
+
+    if (filterOutliers) {
+        // New method
+        for (int i = 0; i < nAveragingCnt && pindex != NULL; i++, pindex = pindex->pprev)
+        {
+            int64_t nBlockTime = pindex->GetBlockTime();
+            if (nBlockTime > 1000 && nBlockTime < 1200000) {
+                nAverage += nBlockTime;
+                cnt++;
+            }
+        }
+        if (cnt) {
+            nAverage /= cnt;
+        }
     }
-    nAverage /= cnt;
+    else { 
+        // Old method
+        nAverage = pindex->GetBlockTime();
+        cnt = 1;
+	    while (pindex->pprev != NULL && cnt < nAveragingCnt)
+	    {
+	        pindex = pindex->pprev;
+	        nAverage += pindex->GetBlockTime();
+	        cnt++;
+	    }
+	    nAverage /= cnt;
+	}
 
     // Check if checkpoint is being used.
     if (usePIDcheckpoint) {
@@ -2933,7 +2959,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
         }
         // Check timestamp against prev
-        if (block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
+        if (nHeight > nHEIGHT_5800 && block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
         }
         // Check that all transactions are finalized
@@ -3989,6 +4015,11 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
         }
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.5/") != std::string::npos) {
             LogPrintf("Client %s runs obsolete version 0.3.5, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.6/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.6, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
             return false;
         }

@@ -177,6 +177,8 @@ namespace PIDCheckpoints
         boost::assign::map_list_of
         (0, CPID(180.0f, 1.0f, 0.05f, 0.1f))
         (5600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5599, 180.0f, 0x2507ffff))
+        (5700, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5699, 180.0f, 0x251751ff))
+        (5800, CPID(180.0f, 1.0f, 0.05f, 0.1f, 0.0f, 0.0f, 0.0f, 0, 5799, 180.0f, 0x2507ffff))
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
