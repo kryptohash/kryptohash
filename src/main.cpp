@@ -1642,7 +1642,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 
     if (filterOutliers) {
         // New method
-        for (int i = 0; i < nAveragingCnt && pindex != NULL; i++, pindex = pindex->pprev)
+        for (int i = 0; i < (int)nAveragingCnt && pindex != NULL; i++, pindex = pindex->pprev)
         {
             int64_t nBlockTime = pindex->GetBlockTime();
             if (nBlockTime > 1000 && nBlockTime < 1200000) {
