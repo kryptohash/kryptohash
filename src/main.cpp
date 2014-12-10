@@ -1683,7 +1683,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         assert(pindex2->pprev);
         nAverage = pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
         cnt = 1;
-        while (pindex2->pprev != NULL && cnt < 50)
+        while (pindex2->pprev != NULL && cnt < 80)
         {
             pindex2 = pindex2->pprev;
             nAverage += pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
@@ -1760,7 +1760,7 @@ void InitPIDstate(void)
 
     nChainHeight = chainActive.Height();
     nLastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    if (nChainHeight < nLastPIDCheckpoint) {
+    if (nChainHeight + 1 < nLastPIDCheckpoint) {
         nLastPIDCheckpoint = nChainHeight + 1;
     }
 
@@ -1784,7 +1784,7 @@ void InitPIDstate(void)
 	    int64_t nHeight = interval - 1;
     if (nLastPIDCheckpoint && PIDctrl.GetHeight()) {
 	    // If checkpoint exits, use height stored in the checkpoint
-	    nHeight = PIDctrl.GetHeight();
+        nHeight = PIDctrl.GetHeight() + interval;
 	}
 	
     while (nHeight < nChainHeight)
