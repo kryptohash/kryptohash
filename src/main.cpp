@@ -1722,10 +1722,33 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 // Initialize the PID controller
 void InitPIDstate(void)
 {
-    uint32_t rand = 0;
-    int64_t LastPIDCheckpoint = 0;
     uint32_t interval;
+    uint32_t rand = 0;
+    int64_t  nLastPIDCheckpoint;
+    int64_t  nChainHeight;
 
+    if (chainActive.Genesis() == NULL) {
+        // Init PID with default parameters.
+        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
+        return;
+    }
+
+    nChainHeight = chainActive.Height();
+    nLastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
+    if (nChainHeight < nLastPIDCheckpoint) {
+        nLastPIDCheckpoint = nChainHeight + 1;
+    }
+
+    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(nLastPIDCheckpoint);
+    if (PID) {
+        // Init PID with parameters stored in the checkpoint.
+        PIDctrl = *PID;
+    }
+    else {
+        // Init PID with default parameters.
+        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
+    }
+    
     if (MainNet()) {
         interval = 100;
     }
@@ -1733,75 +1756,63 @@ void InitPIDstate(void)
         interval = 10;
     }
 
-    LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(LastPIDCheckpoint);
-    if (chainActive.Height() <= 0 || PID == NULL) {
-        // Init PID with default parameters.
-        PIDctrl.SetParams(PIDsetpoint, PIDproportional, PIDintegral, PIDderivative);
-    }
-    else {
-        // Init PID with parameters stored in the last checkpoint.
-        PIDctrl = *PID;
-        LastPIDCheckpoint = PIDctrl.GetHeight() + 1;
-
 	    int64_t nHeight = interval - 1;
-	    if (LastPIDCheckpoint) {
-	        // If checkpoint exits, use height of blockchain after last checkpoint retarget
-	        nHeight += LastPIDCheckpoint;
-	    }
+    if (nLastPIDCheckpoint && PIDctrl.GetHeight()) {
+	    // If checkpoint exits, use height stored in the checkpoint
+	    nHeight = PIDctrl.GetHeight();
+	}
 	
-	    while (nHeight < chainActive.Height())
-	    {
-	        float nDeltaDiff = 0;
-            const CBlockIndex *pindex = chainActive[nHeight];
+    while (nHeight < nChainHeight)
+    {
+        float nDeltaDiff = 0;
+        const CBlockIndex *pindex = chainActive[nHeight];
 
-            if (pindex == NULL) {
-                break;
-            }
+        if (pindex == NULL) {
+            break;
+        }
 #if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
-            // Calculate the height of the next re-target
-            if (MainNet()) {
-                int rc;
-                int64_t prevHeight = pindex->nHeight;
-                PRNG_STRUCT rndStruct;
-                keccakprng_init(&rndStruct);
-                keccakprng_seed(&rndStruct, pindex->GetBlockHash().begin(), pindex->GetBlockHash().size());
-                rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
+        // Calculate the height of the next re-target
+        if (MainNet()) {
+            int rc;
+            int64_t prevHeight = pindex->nHeight;
+            PRNG_STRUCT rndStruct;
+            keccakprng_init(&rndStruct);
+            keccakprng_seed(&rndStruct, pindex->GetBlockHash().begin(), pindex->GetBlockHash().size());
+            rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
+            if (!rc) {
+                rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
                 if (!rc) {
-                    rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
-                    if (!rc) {
-                        rand %= 21;
-                    }
+                    rand %= 21;
                 }
             }
+        }
 #endif
-            int64_t currHeight = nHeight + 1;
-            uint32_t nAveragingCnt = interval / 2;
-            if (currHeight >= nHEIGHT_5600) {
-                nAveragingCnt = interval - 5;
-            }
+        int64_t currHeight = nHeight + 1;
+        uint32_t nAveragingCnt = interval / 2;
+        if (currHeight >= nHEIGHT_5600) {
+            nAveragingCnt = interval - 5;
+        }
 
-            // Go back and collect nTime of the previous nAveragingCnt number of blocks
-            int64_t nAverage = pindex->GetBlockTime();
-            uint32_t cnt = 1;
-            while (pindex->pprev != NULL && cnt < nAveragingCnt)
-            {
-                pindex = pindex->pprev;
-                nAverage += pindex->GetBlockTime();
-                cnt++;
-            }
-            nAverage /= cnt;
+        // Go back and collect nTime of the previous nAveragingCnt number of blocks
+        int64_t nAverage = pindex->GetBlockTime();
+        uint32_t cnt = 1;
+        while (pindex->pprev != NULL && cnt < nAveragingCnt)
+        {
+            pindex = pindex->pprev;
+            nAverage += pindex->GetBlockTime();
+            cnt++;
+        }
+        nAverage /= cnt;
 
-            // Feed the PID controller with the average nTime (in seconds)
-            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
-            // Store Rand, block height and the calculated difficulty
-            PIDctrl.SetRand(rand);
-            PIDctrl.SetHeight(nHeight);
-            PIDctrl.SetDelta(nDeltaDiff);
+        // Feed the PID controller with the average nTime (in seconds)
+        nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
+        // Store Rand, block height and the calculated difficulty
+        PIDctrl.SetRand(rand);
+        PIDctrl.SetHeight(nHeight);
+        PIDctrl.SetDelta(nDeltaDiff);
 
-	        nHeight += (interval + rand);
-	    }
-	}
+        nHeight += (interval + rand);
+    }
 }
 
 bool CheckProofOfWork(uint320 hash, unsigned int nBits)
