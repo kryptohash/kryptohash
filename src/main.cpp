@@ -90,6 +90,7 @@ static const int64_t nHEIGHT_5000 = 5000;
 static const int64_t nHEIGHT_5100 = 5100;
 static const int64_t nHEIGHT_5600 = 5600;
 static const int64_t nHEIGHT_5800 = 5800;
+static const int64_t nHEIGHT_6000 = 6000;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1606,8 +1607,9 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
 #endif
 
-    // Use block height to manually change the parameters.
+    // Use block height to manually hack some of the parameters.
     bool filterOutliers = false;
+    bool preventZeroAverage = false;
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = interval / 2;
@@ -1623,10 +1625,16 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         DeltaMulInc = 2;
         nAveragingCnt = interval - 5;  // Will average using the nTime of latest 95 blocks
     }
-    else if (currHeight >= nHEIGHT_5800) {
+    else if (currHeight >= nHEIGHT_5800  && currHeight < nHEIGHT_6000) {
         DeltaMulInc = 2;
         nAveragingCnt = interval - 5;
         filterOutliers = true;
+    }
+    else if (currHeight >= nHEIGHT_6000) {
+        DeltaMulInc = 2;
+        nAveragingCnt = interval - 5;
+        filterOutliers = true;
+        preventZeroAverage = true;
     }
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
@@ -1666,6 +1674,23 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	    }
 	    nAverage /= cnt;
 	}
+
+    if (preventZeroAverage && nAverage < 1000) {
+        // Seems like a corner case but, it could cause Diff to increase non-stop if 
+        // we feed the PID with zero values.
+        // Use TxTime to calculate an average instead.
+        const CBlockIndex* pindex2 = pindexLast; // Pointer for convinience
+        assert(pindex2->pprev);
+        nAverage = pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+        cnt = 1;
+        while (pindex2->pprev != NULL && cnt < 50)
+        {
+            pindex2 = pindex2->pprev;
+            nAverage += pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+            cnt++;
+        }
+        nAverage /= cnt;
+    }
 
     // Check if checkpoint is being used.
     if (usePIDcheckpoint) {
@@ -3065,8 +3090,9 @@ int64_t CBlockIndex::GetMedianTime() const
     const CBlockIndex* pindex = this;
     for (int i = 0; i < nMedianTimeSpan/2; i++)
     {
-        if (!chainActive.Next(pindex))
-            return GetBlockTime();
+        if (!chainActive.Next(pindex)) {
+            return GetBlockTxTime();
+        }
         pindex = chainActive.Next(pindex);
     }
     return pindex->GetMedianTimePast();
@@ -4037,6 +4063,11 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
         }
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.6/") != std::string::npos) {
             LogPrintf("Client %s runs obsolete version 0.3.6, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.7/") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.7, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
             return false;
         }
