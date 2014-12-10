@@ -1760,7 +1760,7 @@ void InitPIDstate(void)
 
     nChainHeight = chainActive.Height();
     nLastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    if (nChainHeight + 1 < nLastPIDCheckpoint) {
+    if (nChainHeight < nLastPIDCheckpoint) {
         nLastPIDCheckpoint = nChainHeight + 1;
     }
 
