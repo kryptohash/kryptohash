@@ -1430,8 +1430,8 @@ unsigned int ComputeMinWorkPID(unsigned int nBase, int64_t nTxTime)
     const CBigNum &bnLimit = Params().ProofOfWorkLimit();
     CBigNum bnResult;
     bnResult.SetCompact(nBase);
-    int64_t LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    if (LastPIDCheckpoint == 0) {
+    int64_t nLastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
+    if (nLastPIDCheckpoint == 0) {
         while (deltaTime > 0 && bnResult < bnLimit)
         {
             // Maximum 400% adjustment...
@@ -1441,7 +1441,7 @@ unsigned int ComputeMinWorkPID(unsigned int nBase, int64_t nTxTime)
         }
     }
     else {
-        const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(LastPIDCheckpoint);
+        const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(nLastPIDCheckpoint);
         if (!PID) {
             LogPrintf("ComputeMinWorkPID: Error getting PID checkpoint");
             return 0;
@@ -1457,12 +1457,11 @@ unsigned int ComputeMinWorkPID(unsigned int nBase, int64_t nTxTime)
         if (bnPIDcheckpoint > bnLimit) {
             bnPIDcheckpoint = bnLimit;
         }
-        while (deltaTime > 0 && bnResult < bnPIDcheckpoint)
+        while (deltaTime > 0 && bnResult <= bnPIDcheckpoint)
         {
             bnResult <<= 1;
             deltaTime -= (int64_t)myPID.SetPoint * 1000 * nInterval;
         }
-
     }
     if (bnResult > bnLimit) {
         bnResult = bnLimit;
@@ -1636,12 +1635,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 
     // MainNet: Re-target once every 100 - 120 blocks. (100 plus a random value calculated during the previous retarget)
     // TestNet/RegNet: Re-target once every 10 blocks.
-    uint32_t nInterval;
+    uint32_t nRetargetInterval;
     if (MainNet()) {
-        nInterval = 100;
+        nRetargetInterval = 100;
     }
     else {
-        nInterval = 10;
+        nRetargetInterval = 10;
     }
 
     CPID myPID;
@@ -1660,7 +1659,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
 
 
-    if ((pindexLast->nHeight + 1) % (nInterval + rand) != 0) {
+    if ((pindexLast->nHeight + 1) % (nRetargetInterval + rand) != 0) {
         return pindexLast->nBits;
     }
 
@@ -1690,7 +1689,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     bool preventZeroAverage = false;
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
-    uint32_t nAveragingCnt = nInterval / 2;
+    uint32_t nAveragingCnt = nRetargetInterval / 2;
     int64_t currHeight = pindexLast->nHeight + 1;
     if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
         DeltaMulInc = 128;
@@ -1701,16 +1700,16 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
     else if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
         DeltaMulInc = 2;
-        nAveragingCnt = nInterval - 5;  // Will average using the nTime of latest 95 blocks
+        nAveragingCnt = nRetargetInterval - 5;  // Will average using the nTime of latest 95 blocks
     }
     else if (currHeight >= nHEIGHT_5800  && currHeight < nHEIGHT_6000) {
         DeltaMulInc = 2;
-        nAveragingCnt = nInterval - 5;
+        nAveragingCnt = nRetargetInterval - 5;
         filterOutliers = true;
     }
     else if (currHeight >= nHEIGHT_6000) {
         DeltaMulInc = 2;
-        nAveragingCnt = nInterval - 5;
+        nAveragingCnt = nRetargetInterval - 5;
         filterOutliers = true;
         preventZeroAverage = true;
     }
@@ -1729,7 +1728,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 
     // Check if checkpoint is being used.
     if (usePIDcheckpoint) {
-        if (pindexLast->nHeight < myPID.GetHeight() + nInterval) {
+        if (pindexLast->nHeight < myPID.GetHeight() + nRetargetInterval) {
 	        if (myPID.GetDiff()) {
 	            nbits = myPID.GetDiff();
 	        }
@@ -1737,7 +1736,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
 	        }
         }
-        else if (pindexLast->nHeight == myPID.GetHeight() + nInterval) {
+        else if (pindexLast->nHeight == myPID.GetHeight() + nRetargetInterval) {
             // Load PID with checkpoint
             const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(pindexLast->nHeight + 1);
             if (PID) {
@@ -1805,7 +1804,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 // Initialize the PID controller
 void InitPIDstate(void)
 {
-    uint32_t nInterval;
+    uint32_t nRetargetInterval;
     uint32_t nRand = 0;
     int64_t  nLastPIDCheckpoint;
     int64_t  nChainHeight;
@@ -1833,16 +1832,16 @@ void InitPIDstate(void)
     }
     
     if (MainNet()) {
-        nInterval = 100;
+        nRetargetInterval = 100;
     }
     else {
-        nInterval = 10;
+        nRetargetInterval = 10;
     }
 
-    int64_t nHeight = nInterval - 1;
+    int64_t nHeight = nRetargetInterval - 1;
     if (nLastPIDCheckpoint && PIDctrl.GetHeight()) {
 	    // If checkpoint exits, use height stored in the checkpoint
-        nHeight = PIDctrl.GetHeight() + nInterval;
+        nHeight = PIDctrl.GetHeight() + nRetargetInterval;
 	}
 	
     while (nHeight < nChainHeight)
@@ -1873,17 +1872,17 @@ void InitPIDstate(void)
         bool filterOutliers = false;
         bool preventZeroAverage = false;
         int64_t currHeight = nHeight + 1;
-        uint32_t nAveragingCnt = nInterval / 2;
+        uint32_t nAveragingCnt = nRetargetInterval / 2;
         if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
             // Will average using the nTime of latest 95 blocks
-            nAveragingCnt = nInterval - 5;
+            nAveragingCnt = nRetargetInterval - 5;
         }
         else if (currHeight >= nHEIGHT_5800 && currHeight < nHEIGHT_6000) {
-            nAveragingCnt = nInterval - 5;
+            nAveragingCnt = nRetargetInterval - 5;
             filterOutliers = true;
         }
         else if (currHeight >= nHEIGHT_6000) {
-            nAveragingCnt = nInterval - 5;
+            nAveragingCnt = nRetargetInterval - 5;
             filterOutliers = true;
             preventZeroAverage = true;
         }
@@ -1898,7 +1897,7 @@ void InitPIDstate(void)
         PIDctrl.SetHeight(nHeight);
         PIDctrl.SetDelta(nDeltaDiff);
 
-        nHeight += (nInterval + nRand);
+        nHeight += (nRetargetInterval + nRand);
     }
 }
 
@@ -3209,14 +3208,14 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
     if (pcheckpoint && pblock->hashPrevBlock != (chainActive.Tip() ? chainActive.Tip()->GetBlockHash() : uint320(0))) {
         // Extra checks to prevent "fill up memory by spamming with bogus blocks"
-        int64_t deltaTime = pblock->GetBlockTxTime() + 24*60*60*1000 - pcheckpoint->nTxTime; // Allow extra 24 hours since last checkpoint.
+        int64_t deltaTime = pblock->GetBlockTxTime() + nTargetTimespan*1000 - pcheckpoint->nTxTime; // Allow extra 24 hours since last checkpoint.
         if (deltaTime < 0) {
             return state.DoS(100, error("ProcessBlock() : block with timestamp before last checkpoint"), REJECT_CHECKPOINT, "time-too-old");
         }
         CBigNum bnNewBlock;
         bnNewBlock.SetCompact(pblock->nBits);
         CBigNum bnRequired;
-#if 0
+#if 1
         bnRequired.SetCompact(ComputeMinWork(pcheckpoint->nBits, deltaTime));
 #else
         bnRequired.SetCompact(ComputeMinWorkPID(pcheckpoint->nBits, pblock->GetBlockTxTime()));

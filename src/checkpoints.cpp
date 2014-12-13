@@ -51,7 +51,7 @@ namespace Checkpoints
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
-        0x149aba00000, // * UNIX timestamp of last checkpoint block
+        0x14A3FDB1CA0, // * UNIX timestamp of last checkpoint block
         21885,         // * total number of transactions between genesis and last checkpoint
                        //   (the tx=... number in the SetBestChain debug.log lines)
         60000.0        // * estimated number of transactions per day after checkpoint
@@ -188,7 +188,7 @@ namespace PIDCheckpoints
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
-        0x149aba00000 // * timestamp of last PID checkpoint (Must Fix)
+        0x14A3FDB1CA0 // * timestamp of last PID checkpoint (Must Fix)
     };
 
     static MapPIDCheckpoints mapPIDCheckpointsTestnet =
