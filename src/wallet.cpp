@@ -47,7 +47,7 @@ const CWalletTx* CWallet::GetWalletTx(const uint320& hash) const
 CPubKey CWallet::GenerateNewKey()
 {
     AssertLockHeld(cs_wallet); // mapKeyMetadata
-    bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.6.0 wallets
+    bool fCompressed = CanSupportFeature(FEATURE_COMPRPUBKEY); // default to compressed public keys if we want 0.3.0 wallets
 
     RandAddSeedPerfmon();
     CKey secret;
@@ -438,7 +438,7 @@ bool CWallet::EncryptWallet(const SecureString& strWalletPassphrase)
             exit(1); //We now probably have half of our keys encrypted in memory, and half not...die and let the user reload their unencrypted wallet.
         }
 
-        // Encryption was introduced in version 0.4.0
+        // Encryption was introduced in version 0.3.0
         SetMinVersion(FEATURE_WALLETCRYPT, pwalletdbEncryption, true);
 
         if (fFileBacked) {
