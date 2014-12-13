@@ -172,7 +172,7 @@ bool GetTransaction(const uint320 &hash, CTransaction &tx, uint320 &hashBlock, b
 bool ActivateBestChain(CValidationState &state);
 int64_t GetBlockValue(int64_t nHeight, int64_t nFees, const uint320 previousHash);
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
-unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
+unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fFeedPID = false);
 void InitPIDstate(void);
 void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev);
 void UpdateTxTime(CBlockHeader& block, const CBlockIndex* pindexPrev);

@@ -1550,11 +1550,98 @@ unsigned int CalcRetarget2(const unsigned int nBits, const float delta, unsigned
     return nbits;
 }
 
-unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
+int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
+{
+    if (pindexLast == NULL) {
+        return nTargetSpacing * 1000;
+    }
+
+    // Go back and collect nTime of the previous nAveragingCnt number of blocks
+    int64_t nAverage = 0;
+    uint32_t cnt = 0;
+    const CBlockIndex* pindex = pindexLast; // Pointer for convinience
+
+    if (fFilterOutliers) {
+        // New method
+        for (int i = 0; i < (int)nAverageCnt && pindex != NULL; i++, pindex = pindex->pprev)
+        {
+            int64_t nBlockTime = pindex->GetBlockTime();
+            if (nBlockTime > 1000 && nBlockTime < 1200000) {
+                nAverage += nBlockTime;
+                cnt++;
+            }
+        }
+        if (cnt) {
+            nAverage /= cnt;
+        }
+    }
+    else {
+        // Old method
+        nAverage = pindex->GetBlockTime();
+        cnt = 1;
+        while (pindex->pprev != NULL && cnt < nAverageCnt)
+        {
+            pindex = pindex->pprev;
+            nAverage += pindex->GetBlockTime();
+            cnt++;
+        }
+        nAverage /= cnt;
+    }
+
+    if (fNoZeroAverage && nAverage < 1000) {
+        // Seems like a corner case but, it could cause Diff to increase non-stop if 
+        // we feed the PID with zero values.
+        // Use TxTime to calculate the mean time between blocks instead.
+        const CBlockIndex* pindex2 = pindexLast; // Pointer for convinience
+        assert(pindex2->pprev);
+        nAverage = pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+        cnt = 1;
+        while (pindex2->pprev != NULL && cnt < 90)
+        {
+            pindex2 = pindex2->pprev;
+            nAverage += pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+            cnt++;
+        }
+        nAverage /= cnt;
+    }
+
+#if defined(KRYPTOHASH_DEV)
+    {
+        // Use TxTime to calculate mean time betweeen blocks.
+        const CBlockIndex* pindex2 = pindexLast; // Pointer for convinience
+        assert(pindex2->pprev);
+        int64_t myAverage = pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+        uint32_t mycnt = 1;
+        while (pindex2->pprev != NULL && mycnt < 90)
+        {
+            pindex2 = pindex2->pprev;
+            myAverage += pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
+            mycnt++;
+        }
+        myAverage /= mycnt;
+
+        LogPrintf("GetMeanTime: Average1 = %lu, Average2 = %lu\n", nAverage, myAverage);
+    }
+#endif
+
+    return nAverage;
+}
+
+unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fFeedPID)
 {
     // Genesis block
     if (pindexLast == NULL) {
         return Params().ProofOfWorkLimit().GetCompact();
+    }
+
+    // MainNet: Re-target once every 100 - 120 blocks. (100 plus a random value calculated during the previous retarget)
+    // TestNet/RegNet: Re-target once every 10 blocks.
+    uint32_t nInterval;
+    if (MainNet()) {
+        nInterval = 100;
+    }
+    else {
+        nInterval = 10;
     }
 
     CPID myPID;
@@ -1562,8 +1649,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     bool usePIDcheckpoint = false;
 
     // Check if pindexLast->nHeight is below height of last PID checkpoint
-    int64_t LastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
-    if (pindexLast->nHeight < LastPIDCheckpoint) {
+    int64_t nLastPIDCheckpoint = PIDCheckpoints::PIDGetHeightLastCheckpoint();
+    if (pindexLast->nHeight < nLastPIDCheckpoint) {
         const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(pindexLast->nHeight + 1);
         if (PID) {
             myPID = *PID;
@@ -1572,17 +1659,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         }
     }
 
-    // MainNet: Re-target once every 100 - 120 blocks. (100 plus a random value calculated during the previous retarget)
-    // TestNet/RegNet: Re-target once every 10 blocks.
-    uint32_t interval;
-    if (MainNet()) {
-        interval = 100;
-    }
-    else {
-        interval = 10;
-    }
 
-    if ((pindexLast->nHeight + 1) % (interval + rand) != 0) {
+    if ((pindexLast->nHeight + 1) % (nInterval + rand) != 0) {
         return pindexLast->nBits;
     }
 
@@ -1612,7 +1690,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     bool preventZeroAverage = false;
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
-    uint32_t nAveragingCnt = interval / 2;
+    uint32_t nAveragingCnt = nInterval / 2;
     int64_t currHeight = pindexLast->nHeight + 1;
     if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
         DeltaMulInc = 128;
@@ -1623,16 +1701,16 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
     else if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
         DeltaMulInc = 2;
-        nAveragingCnt = interval - 5;  // Will average using the nTime of latest 95 blocks
+        nAveragingCnt = nInterval - 5;  // Will average using the nTime of latest 95 blocks
     }
     else if (currHeight >= nHEIGHT_5800  && currHeight < nHEIGHT_6000) {
         DeltaMulInc = 2;
-        nAveragingCnt = interval - 5;
+        nAveragingCnt = nInterval - 5;
         filterOutliers = true;
     }
     else if (currHeight >= nHEIGHT_6000) {
         DeltaMulInc = 2;
-        nAveragingCnt = interval - 5;
+        nAveragingCnt = nInterval - 5;
         filterOutliers = true;
         preventZeroAverage = true;
     }
@@ -1640,91 +1718,67 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
     assert(pindex);  // It should never happen.
 
+    // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
+    int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
+
+    nAverage /= 1000;  // In seconds.
+
     // Retarget
     float nDeltaDiff = 0;
     unsigned int nbits = 0;
 
-    // Go back and collect nTime of the previous nAveragingCnt number of blocks
-    int64_t nAverage = 0;
-    uint32_t cnt = 0;
-
-    if (filterOutliers) {
-        // New method
-        for (int i = 0; i < (int)nAveragingCnt && pindex != NULL; i++, pindex = pindex->pprev)
-        {
-            int64_t nBlockTime = pindex->GetBlockTime();
-            if (nBlockTime > 1000 && nBlockTime < 1200000) {
-                nAverage += nBlockTime;
-                cnt++;
-            }
-        }
-        if (cnt) {
-            nAverage /= cnt;
-        }
-    }
-    else { 
-        // Old method
-        nAverage = pindex->GetBlockTime();
-        cnt = 1;
-	    while (pindex->pprev != NULL && cnt < nAveragingCnt)
-	    {
-	        pindex = pindex->pprev;
-	        nAverage += pindex->GetBlockTime();
-	        cnt++;
-	    }
-	    nAverage /= cnt;
-	}
-
-    if (preventZeroAverage && nAverage < 1000) {
-        // Seems like a corner case but, it could cause Diff to increase non-stop if 
-        // we feed the PID with zero values.
-        // Use TxTime to calculate an average instead.
-        const CBlockIndex* pindex2 = pindexLast; // Pointer for convinience
-        assert(pindex2->pprev);
-        nAverage = pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
-        cnt = 1;
-        while (pindex2->pprev != NULL && cnt < 80)
-        {
-            pindex2 = pindex2->pprev;
-            nAverage += pindex2->GetMedianTimePast() - pindex2->pprev->GetMedianTimePast();
-            cnt++;
-        }
-        nAverage /= cnt;
-    }
-
     // Check if checkpoint is being used.
     if (usePIDcheckpoint) {
-        if (myPID.GetDiff()) {
-            nbits = myPID.GetDiff();
+        if (pindexLast->nHeight < myPID.GetHeight() + nInterval) {
+	        if (myPID.GetDiff()) {
+	            nbits = myPID.GetDiff();
+	        }
+	        else if (myPID.GetDelta()) {
+	            nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
+	        }
         }
-        else if (myPID.GetDelta()) {
-            nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
+        else if (pindexLast->nHeight == myPID.GetHeight() + nInterval) {
+            // Load PID with checkpoint
+            const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(pindexLast->nHeight + 1);
+            if (PID) {
+                PIDctrl = *PID;
+            }
         }
-        else if (myPID.GetHeight() < currHeight) {
-            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
+
+        if (!nbits) {
+            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
             // Store the calculated Difficulty and block Height 
             PIDctrl.SetDelta(nDeltaDiff);
             PIDctrl.SetHeight(pindexLast->nHeight);
             nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
+    }
         else {
-            nDeltaDiff = myPID.PIDCalculate(float(nAverage / 1000));
-            nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
+        if (PIDctrl.GetHeight() < nLastPIDCheckpoint) {
+            // Load PID with last checkpoint
+            const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(nLastPIDCheckpoint);
+            if (PID) {
+                PIDctrl = *PID;
         }
     }
-    else {
-        // If we already fed the PID, use the stored Delta Diff
+        // If Height in PID is current, use the stored Delta Diff
         if (pindexLast->nHeight > 0 && pindexLast->nHeight == PIDctrl.GetHeight()) {
             nDeltaDiff = PIDctrl.GetDelta();
         }
         else {
-            // Feed the PID controller with the average nTime (in seconds).
-            // PID will return how much the delta diff needs to be in order to
-            // reach the setpoint.
-            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
-            // Store the calculated Difficulty and block Height 
-            PIDctrl.SetDelta(nDeltaDiff);
-            PIDctrl.SetHeight(pindexLast->nHeight);
+            if (fFeedPID) {
+	            // Feed the PID controller with the average nTime (in seconds).
+	            // PID will return how much the delta diff needs to be in order to
+	            // reach the setpoint.
+                nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+	            // Store the calculated Difficulty and block Height 
+	            PIDctrl.SetDelta(nDeltaDiff);
+	            PIDctrl.SetHeight(pindexLast->nHeight);
+	        }
+            else {
+                myPID = PIDctrl;
+                nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+            }
         }
         nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
     }
@@ -1733,6 +1787,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     bnNew.SetCompact(nbits);
     if (bnNew > Params().ProofOfWorkLimit()) {
         bnNew = Params().ProofOfWorkLimit();
+    }
+
+    if (!usePIDcheckpoint) {
+        PIDctrl.SetDiff(bnNew.GetCompact());
     }
 
     /// debug print
@@ -1747,8 +1805,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 // Initialize the PID controller
 void InitPIDstate(void)
 {
-    uint32_t interval;
-    uint32_t rand = 0;
+    uint32_t nInterval;
+    uint32_t nRand = 0;
     int64_t  nLastPIDCheckpoint;
     int64_t  nChainHeight;
 
@@ -1775,16 +1833,16 @@ void InitPIDstate(void)
     }
     
     if (MainNet()) {
-        interval = 100;
+        nInterval = 100;
     }
     else {
-        interval = 10;
+        nInterval = 10;
     }
 
-	    int64_t nHeight = interval - 1;
+    int64_t nHeight = nInterval - 1;
     if (nLastPIDCheckpoint && PIDctrl.GetHeight()) {
 	    // If checkpoint exits, use height stored in the checkpoint
-        nHeight = PIDctrl.GetHeight() + interval;
+        nHeight = PIDctrl.GetHeight() + nInterval;
 	}
 	
     while (nHeight < nChainHeight)
@@ -1805,38 +1863,42 @@ void InitPIDstate(void)
             keccakprng_seed(&rndStruct, pindex->GetBlockHash().begin(), pindex->GetBlockHash().size());
             rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
             if (!rc) {
-                rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
+                rc = keccakprng_bytes(&rndStruct, (unsigned char*)&nRand, sizeof(nRand));
                 if (!rc) {
-                    rand %= 21;
+                    nRand %= 21;
                 }
             }
         }
 #endif
+        bool filterOutliers = false;
+        bool preventZeroAverage = false;
         int64_t currHeight = nHeight + 1;
-        uint32_t nAveragingCnt = interval / 2;
-        if (currHeight >= nHEIGHT_5600) {
-            nAveragingCnt = interval - 5;
+        uint32_t nAveragingCnt = nInterval / 2;
+        if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
+            // Will average using the nTime of latest 95 blocks
+            nAveragingCnt = nInterval - 5;
+        }
+        else if (currHeight >= nHEIGHT_5800 && currHeight < nHEIGHT_6000) {
+            nAveragingCnt = nInterval - 5;
+            filterOutliers = true;
+        }
+        else if (currHeight >= nHEIGHT_6000) {
+            nAveragingCnt = nInterval - 5;
+            filterOutliers = true;
+            preventZeroAverage = true;
         }
 
-        // Go back and collect nTime of the previous nAveragingCnt number of blocks
-        int64_t nAverage = pindex->GetBlockTime();
-        uint32_t cnt = 1;
-        while (pindex->pprev != NULL && cnt < nAveragingCnt)
-        {
-            pindex = pindex->pprev;
-            nAverage += pindex->GetBlockTime();
-            cnt++;
-        }
-        nAverage /= cnt;
+        // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
+        int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
 
         // Feed the PID controller with the average nTime (in seconds)
         nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
         // Store Rand, block height and the calculated difficulty
-        PIDctrl.SetRand(rand);
+        PIDctrl.SetRand(nRand);
         PIDctrl.SetHeight(nHeight);
         PIDctrl.SetDelta(nDeltaDiff);
 
-        nHeight += (interval + rand);
+        nHeight += (nInterval + nRand);
     }
 }
 
@@ -2497,9 +2559,9 @@ void static UpdateTip(CBlockIndex *pindexNew)
     // New best block
     nTimeBestReceived = GetTime();
     mempool.AddTransactionsUpdated(1);
-    LogPrintf("UpdateTip: new best=%s  height=%d  log2_work=%.8g  tx=%lu  date=%s progress=%f\n",
+    LogPrintf("UpdateTip: new best=%s  height=%d  log2_work=%.8g  tx=%lu  TxTime=%s  nTime=%lu  progress=%f\n",
               chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(), log(chainActive.Tip()->nChainWork.getdouble())/log(2.0), (unsigned long)chainActive.Tip()->nChainTx,
-              DateTimeStrFormatMillis("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTxTime()),
+              DateTimeStrFormatMillis("%Y-%m-%d %H:%M:%S", chainActive.Tip()->GetBlockTxTime()), chainActive.Tip()->GetBlockTime(),
               Checkpoints::GuessVerificationProgress(chainActive.Tip()));
 
     // Check the version of the last 100 blocks to see if we need to upgrade:
@@ -2891,7 +2953,7 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
         return state.DoS(50, error("CheckBlock() : proof of work failed"), REJECT_INVALID, "high-hash");
     }
     // Check timestamp
-    if (block.GetBlockTxTime() > GetTimeMillis() + 2 * 60 * 60 * 1000) { // Two hours in the future
+    if (block.GetBlockTxTime() > (GetAdjustedTime() + 2 * 60 * 60) * 1000) { // Two hours in the future
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"), REJECT_INVALID, "time-too-new");
     }
 
@@ -2995,7 +3057,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
 #if 0
         if (block.nBits != GetNextWorkRequired(pindexPrev, &block))
 #else
-        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block))
+        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
 #endif
         {
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
@@ -3004,6 +3066,23 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (nHeight > nHEIGHT_5800 && block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
         }
+
+#if defined(KRYPTOHASH_DEV)
+        // Additional timestamp checks
+        if (nHeight > nHEIGHT_6000 && (block.GetBlockTxTime() + block.GetBlockTime()) > (GetAdjustedTime() + 2 * nTargetSpacing) * 1000) {
+		    LogPrintf("AcceptBlock(): WARNING: block with nTxTime + nTime > 6 mins current time. nTxTime=%lu  nTime=%lu  currAdjustedTime=%lu\n", 
+	             block.GetBlockTxTime(), block.GetBlockTime(), (GetAdjustedTime() + 2*nTargetSpacing) * 1000);
+		}
+        else if (nHeight > nHEIGHT_6000 && (block.GetBlockTxTime() + block.GetBlockTime()) > (GetAdjustedTime() + nTargetSpacing) * 1000) {
+            LogPrintf("AcceptBlock(): WARNING: block with nTxTime + nTime > 3 mins current time. nTxTime=%lu  nTime=%lu  currAdjustedTime=%lu\n",
+                block.GetBlockTxTime(), block.GetBlockTime(), (GetAdjustedTime() + nTargetSpacing) * 1000);
+        }
+        else if (nHeight > nHEIGHT_6000 && (block.GetBlockTxTime() + block.GetBlockTime()) > (GetAdjustedTime() + 60) * 1000) {
+            LogPrintf("AcceptBlock(): WARNING: block with nTxTime + nTime > 1 min current time. nTxTime=%lu  nTime=%lu  currAdjustedTime=%lu\n",
+                block.GetBlockTxTime(), block.GetBlockTime(), (GetAdjustedTime() + 60) * 1000);
+        }
+#endif
+
         // Check that all transactions are finalized
         BOOST_FOREACH(const CTransaction& tx, block.vtx) 
         {

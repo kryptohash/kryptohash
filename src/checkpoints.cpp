@@ -47,11 +47,12 @@ namespace Checkpoints
         (5749, uint320("00000001DE53835FEFC5CE5327F18FC4B9A33BEBA538B37CACDBDCE7E100BD6E88809CD449F17B6B"))
         (5860, uint320("00000002561825F14E3818161AD74D3C6E3E2E26C53FA2A20DD10CE3208D5D5CC7BB73EE55ADE64D"))
         (5900, uint320("00000017EB2CD60A7D328340F4B37BC1A99B89D18BC09C3840B611FA1C701FD50271E54CBFD72E23"))
+        (8600, uint320("0000000161808757702034BF82F3C8764FABF0EC6C1E4075C4F3081705225AF36F9B2E22B13A150F"))
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
         0x149aba00000, // * UNIX timestamp of last checkpoint block
-        15379,         // * total number of transactions between genesis and last checkpoint
+        21885,         // * total number of transactions between genesis and last checkpoint
                        //   (the tx=... number in the SetBestChain debug.log lines)
         60000.0        // * estimated number of transactions per day after checkpoint
     };
@@ -183,6 +184,7 @@ namespace PIDCheckpoints
         (5700, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5699, 108.30000305f, 0x251751ff))
         (5800, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5799, 108.30000305f, 0x251995ff))
         (5900, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5899, 108.30000305f, 0x251a64ff))
+        (8600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 201.0f, -30.0f,-25.0f, 0, 8599, -25.75000000f, 0x2501aeff))
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
