@@ -1549,6 +1549,41 @@ unsigned int CalcRetarget2(const unsigned int nBits, const float delta, unsigned
     return nbits;
 }
 
+bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetIntervalIn, unsigned int *DeltaMulInc, unsigned int *DeltaMulDec,
+    uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage)
+{
+    if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL) {
+        return false;
+    }
+
+    // Use block height as input to manually hack some of the parameters.
+
+    if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
+        *DeltaMulInc = 128;
+        *DeltaMulDec = 16;
+    }
+    else if (currHeight >= nHEIGHT_5100 && currHeight < nHEIGHT_5600) {
+        *DeltaMulInc = 8;
+    }
+    else if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
+        *DeltaMulInc = 2;
+        *nAveragingCnt = nRetargetIntervalIn - 5;  // Will average using the nTime of latest 95 blocks
+    }
+    else if (currHeight >= nHEIGHT_5800 && currHeight < nHEIGHT_6000) {
+        *DeltaMulInc = 2;
+        *nAveragingCnt = nRetargetIntervalIn - 5;
+        *filterOutliers = true;
+    }
+    else if (currHeight >= nHEIGHT_6000) {
+        *DeltaMulInc = 2;
+        *nAveragingCnt = nRetargetIntervalIn - 5;
+        *filterOutliers = true;
+        *preventZeroAverage = true;
+    }
+
+    return true;
+}
+
 int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
 {
     if (pindexLast == NULL) {
@@ -1690,29 +1725,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = nRetargetInterval / 2;
-    int64_t currHeight = pindexLast->nHeight + 1;
-    if (currHeight >= nHEIGHT_5000 && currHeight < nHEIGHT_5100) {
-        DeltaMulInc = 128;
-        DeltaMulDec = 16;
-    }
-    else if (currHeight >= nHEIGHT_5100 && currHeight < nHEIGHT_5600) {
-        DeltaMulInc = 8;
-    }
-    else if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
-        DeltaMulInc = 2;
-        nAveragingCnt = nRetargetInterval - 5;  // Will average using the nTime of latest 95 blocks
-    }
-    else if (currHeight >= nHEIGHT_5800  && currHeight < nHEIGHT_6000) {
-        DeltaMulInc = 2;
-        nAveragingCnt = nRetargetInterval - 5;
-        filterOutliers = true;
-    }
-    else if (currHeight >= nHEIGHT_6000) {
-        DeltaMulInc = 2;
-        nAveragingCnt = nRetargetInterval - 5;
-        filterOutliers = true;
-        preventZeroAverage = true;
-    }
+
+    assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage));
 
     const CBlockIndex* pindex = pindexLast; // Pointer for convinience
     assert(pindex);  // It should never happen.
@@ -1793,10 +1807,15 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     }
 
     /// debug print
-    LogPrintf("GetNextWorkRequiredPID RETARGET at Height: %u\n", pindexLast->nHeight+1);
-    LogPrintf("Before: %08x  %s\n", pindexLast->nBits, CBigNum().SetCompact(pindexLast->nBits).getuint320().ToString());
-    LogPrintf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint320().ToString());
-    PIDctrl.print();
+    if (fFeedPID) {
+	    LogPrintf("GetNextWorkRequiredPID RETARGET at Height: %u\n", pindexLast->nHeight+1);
+	    LogPrintf("Before: %08x  %s\n", pindexLast->nBits, CBigNum().SetCompact(pindexLast->nBits).getuint320().ToString());
+	    LogPrintf("After:  %08x  %s\n", bnNew.GetCompact(), bnNew.getuint320().ToString());
+	    PIDctrl.print();
+    }
+    else {
+        LogPrintf("GetNextWorkRequiredPID returning diff=%08x for block with height=%u\n", bnNew.GetCompact(), pindexLast->nHeight + 1);
+    }
 
     return bnNew.GetCompact();
 }
@@ -1871,34 +1890,37 @@ void InitPIDstate(void)
 #endif
         bool filterOutliers = false;
         bool preventZeroAverage = false;
-        int64_t currHeight = nHeight + 1;
+        unsigned int DeltaMulInc = 1;
+        unsigned int DeltaMulDec = 1;
         uint32_t nAveragingCnt = nRetargetInterval / 2;
-        if (currHeight >= nHEIGHT_5600 && currHeight < nHEIGHT_5800) {
-            // Will average using the nTime of latest 95 blocks
-            nAveragingCnt = nRetargetInterval - 5;
-        }
-        else if (currHeight >= nHEIGHT_5800 && currHeight < nHEIGHT_6000) {
-            nAveragingCnt = nRetargetInterval - 5;
-            filterOutliers = true;
-        }
-        else if (currHeight >= nHEIGHT_6000) {
-            nAveragingCnt = nRetargetInterval - 5;
-            filterOutliers = true;
-            preventZeroAverage = true;
-        }
+
+        assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage));
 
         // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
         int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
 
+        nAverage /= 1000;
+
         // Feed the PID controller with the average nTime (in seconds)
-        nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage / 1000));
+        nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
         // Store Rand, block height and the calculated difficulty
         PIDctrl.SetRand(nRand);
         PIDctrl.SetHeight(nHeight);
         PIDctrl.SetDelta(nDeltaDiff);
 
+        unsigned int nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
+
+        CBigNum bnNew;
+        bnNew.SetCompact(nbits);
+        if (bnNew > Params().ProofOfWorkLimit()) {
+            bnNew = Params().ProofOfWorkLimit();
+        }
+        PIDctrl.SetDiff(bnNew.GetCompact());
+
         nHeight += (nRetargetInterval + nRand);
     }
+    LogPrintf("InitPIDstate done at Height: %u\n", nHeight);
+    PIDctrl.print();
 }
 
 bool CheckProofOfWork(uint320 hash, unsigned int nBits)
@@ -4119,33 +4141,8 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
         }
 
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.2/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.2, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.3/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.3, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.4/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.4, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.5/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.5, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.6/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.6, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3.7/") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.7, disconnecting\n", pfrom->addr.ToString());
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.3.x, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
             return false;
         }
