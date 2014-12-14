@@ -18,10 +18,10 @@
 #define CLIENT_VERSION_MAJOR 0
 
 /* Minor version */
-#define CLIENT_VERSION_MINOR 3
+#define CLIENT_VERSION_MINOR 4
 
 /* Build revision */
-#define CLIENT_VERSION_REVISION 9
+#define CLIENT_VERSION_REVISION 0
 
 /* Version is release */
 #define COPYRIGHT_YEAR 2014
@@ -205,7 +205,7 @@
 #define PACKAGE_NAME "Kryptohash Core"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Kryptohash Core 0.3.9"
+#define PACKAGE_STRING "Kryptohash Core 0.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "kryptohash"
@@ -214,7 +214,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.3.9"
+#define PACKAGE_VERSION "0.4.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
