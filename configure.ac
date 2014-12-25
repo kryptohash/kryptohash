@@ -2,7 +2,7 @@ dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 0)
 define(_CLIENT_VERSION_MINOR, 4)
-define(_CLIENT_VERSION_REVISION, 0)
+define(_CLIENT_VERSION_REVISION, 1)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2014)
@@ -231,15 +231,15 @@ case $host in
        AC_CHECK_PROG([PORT],port, port)
        if test x$PORT = xport; then
          dnl add default macports paths
-         CPPFLAGS="$CPPFLAGS -isystem /opt/local/include -I/opt/local/include/db48"
-         LIBS="$LIBS -L/opt/local/lib -L/opt/local/lib/db48"
+         CPPFLAGS="$CPPFLAGS -isystem /opt/local/include -I/opt/local/include/db53"
+         LIBS="$LIBS -L/opt/local/lib -L/opt/local/lib/db53"
        fi
 
        AC_CHECK_PROG([BREW],brew, brew)
        if test x$BREW = xbrew; then
          dnl add default homebrew paths
          openssl_prefix=`$BREW --prefix openssl`
-         bdb_prefix=`$BREW --prefix berkeley-db4`
+         bdb_prefix=`$BREW --prefix berkeley-db`
          export PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
          CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
          LIBS="$LIBS -L$bdb_prefix/lib"
