@@ -77,7 +77,7 @@ public:
     const vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char> &Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     virtual const vector<CAddress>& FixedSeeds() const = 0;
-    virtual bool UpdateParams(const int nRegionIn, const Genesis::CGenesisData dataIn) const = 0;
+    virtual bool UpdateParams(const int nRegionIn, const CGenesis dataIn) const = 0;
     int RPCPort() const { return nRPCPort; }
     void SetHashCoinMask(uint64_t nHashCoinMaskIn) const { nHashCoinMask = nHashCoinMaskIn; }
 

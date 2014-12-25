@@ -110,14 +110,14 @@ public:
         return vFixedSeeds;
     }
 
-    virtual bool UpdateParams(const int nRegionIn, const Genesis::CGenesisData dataIn) const {
+    virtual bool UpdateParams(const int nRegionIn, const CGenesis dataIn) const {
         CBlock updateGenesis = GenesisBlock();
         updateGenesis.nRegion = nRegionIn;
         updateGenesis.nTxTime = dataIn.nTxTime;
         updateGenesis.nNonce = dataIn.nNonce;
 
         uint320 hash = updateGenesis.GetKryptoHash();
-        if (hash == dataIn.hash) {
+        if (hash == dataIn.nHash) {
             SetRegionCode(nRegionIn);
             genesis.nRegion = updateGenesis.nRegion;
             genesis.nTxTime = updateGenesis.nTxTime;

@@ -556,7 +556,7 @@ bool AppInit2(boost::thread_group& threadGroup)
             return InitError(strprintf(_("Invalid region value: %s"), mapArgs["-region"]));
 
         if (nRegionCode != 0) {
-            Genesis::CGenesisData data;
+            CGenesis data;
 
             if (!Genesis::GetGenesisData(nRegionCode, data))
                 return InitError(strprintf(_("Could not find a Genesis block for region %s"), mapArgs["-region"]));

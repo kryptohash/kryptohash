@@ -12,18 +12,35 @@
 /*
  * These are compiled-in genesis blocks for each available region.
  */
+
+class CGenesis
+{
+public:
+    int64_t  nTxTime;
+    uint32_t nNonce;
+    uint320  nHash;
+
+    CGenesis() : nTxTime(0), nNonce(0), nHash(0) {}
+
+    CGenesis(int64_t time, uint32_t nonce, uint320 hash) {
+        nTxTime = time;
+        nNonce = nonce;
+        nHash = hash;
+    }
+
+    CGenesis& operator=(const CGenesis& rhs) {
+        nTxTime = rhs.nTxTime;
+        nNonce = rhs.nNonce;
+        nHash = rhs.nHash;
+        return *this;
+    }
+};
+
 namespace Genesis
 {
-    struct CGenesisData {
-        int64_t  nTxTime;
-        uint32_t nNonce;
-        uint320  hash;
-    };
-
-    typedef std::map<int, CGenesisData> MapGenesis;
 
     // Returns true if region contains a genesis block
-    bool GetGenesisData(int nRegion, CGenesisData& data);
+    bool GetGenesisData(int nRegion, CGenesis& data);
 
 }
 
