@@ -628,6 +628,19 @@ Value submitblock(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
+    if (params.size() > 1) {
+        vector<unsigned char> txData(ParseHex(params[1].get_str()));
+        CDataStream ssTx(txData, SER_NETWORK, PROTOCOL_VERSION);
+        std::vector<CTransaction> ptxs;
+        try {
+            ssTx >> ptxs;
+        }
+        catch (std::exception &e) {
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction decode failed");
+        }
+        pblock.vtx = ptxs;
+    }
+
     CValidationState state;
     bool fAccepted = ProcessBlock(state, NULL, &pblock);
     if (!fAccepted) {
