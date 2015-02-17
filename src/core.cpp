@@ -93,11 +93,6 @@ uint320 CTransaction::GetHash() const
     return SerializeHash(*this);
 }
 
-uint320 CTransaction::GetKryptoHash() const
-{
-    return SerializeKryptoHash(*this);
-}
-
 bool CTransaction::IsNewerThan(const CTransaction& old) const
 {
     if (vin.size() != old.vin.size()) {
@@ -251,7 +246,12 @@ uint320 CBlockHeader::GetHash() const
 
 uint320 CBlockHeader::GetKryptoHash() const
 {
-    return KryptoHash(BEGIN(nVersion), END(nNonce));
+    if (nVersion <= 1) {
+        return KryptoHash(BEGIN(nVersion), END(nNonce));
+    }
+    else {
+        return KSHAKE320v2(BEGIN(nVersion), END(nNonce));
+    }
 }
 
 uint320 CBlock::BuildMerkleTree() const

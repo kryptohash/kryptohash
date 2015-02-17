@@ -85,13 +85,6 @@ const float PIDderivative   = 0.100f;
 
 CPID PIDctrl;
 
-// Diff algo manual adjustments
-static const int64_t nHEIGHT_5000 = 5000;
-static const int64_t nHEIGHT_5100 = 5100;
-static const int64_t nHEIGHT_5600 = 5600;
-static const int64_t nHEIGHT_5800 = 5800;
-static const int64_t nHEIGHT_6000 = 6000;
-
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
@@ -2187,7 +2180,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, CCoinsViewCach
 
             // If prev is coinbase, check that it's matured (block #1 is the only exception).
             if (coins.IsCoinBase() && chainActive.Height() > 1) {
-                if (nSpendHeight - coins.nHeight < COINBASE_MATURITY) {
+                if (MainNet() && nSpendHeight - coins.nHeight < COINBASE_MATURITY) {
                     return state.Invalid(error("CheckInputs() : tried to spend coinbase at depth %d", nSpendHeight - coins.nHeight), REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
                 }
             }
@@ -3121,8 +3114,19 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
         }
         // Kryptohash block versions begin with 1.
-        if (block.nVersion < 1) {
+        if (block.GetBlockVersion() < 1) {
             return state.Invalid(error("AcceptBlock() : rejected incorrect nVersion block"), REJECT_OBSOLETE, "bad-version");
+        }
+        // Reject version=1 blocks after height 50,000 and only when 90% of the network has upgraded:
+        if (block.GetBlockVersion() < 2) {
+            if (MainNet() && nHeight > nHEIGHT_50000) {
+                if (CBlockIndex::IsSuperMajority(2, pindexPrev, 900, 1000)) {
+                    return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
+                }
+            }
+            else if (TestNet() && nHeight > 50) {
+                return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
+            }
         }
         // Enforce rule that the coinbase starts with serialized block height
         if (nHeight)
@@ -4146,7 +4150,13 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             pfrom->fDisconnect = true;
             return false;
         }
-
+/*
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.4") != std::string::npos) {
+            LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
+        }
+*/
         if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }

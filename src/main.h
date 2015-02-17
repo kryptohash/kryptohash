@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
-// Copyright (c) 2014 Kryptohash developers
-// Distributed under the MIT/X11 software license, see the accompanying
+// Copyright (c) 2014-2015 Kryptohash developers
+// Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_MAIN_H
@@ -83,6 +83,14 @@ static const unsigned char REJECT_NONSTANDARD = 0x40;
 static const unsigned char REJECT_DUST = 0x41;
 static const unsigned char REJECT_INSUFFICIENTFEE = 0x42;
 static const unsigned char REJECT_CHECKPOINT = 0x43;
+
+// Diff algo manual adjustments
+static const int64_t nHEIGHT_5000 = 5000;
+static const int64_t nHEIGHT_5100 = 5100;
+static const int64_t nHEIGHT_5600 = 5600;
+static const int64_t nHEIGHT_5800 = 5800;
+static const int64_t nHEIGHT_6000 = 6000;
+static const int64_t nHEIGHT_50000 = 50000;
 
 
 extern CScript COINBASE_FLAGS;

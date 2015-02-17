@@ -260,8 +260,6 @@ public:
 
     uint320 GetHash() const;
 
-    uint320 GetKryptoHash() const;
-
     bool IsNewerThan(const CTransaction& old) const;
 
     // Return sum of txouts.
@@ -487,6 +485,11 @@ public:
     int64_t GetBlockTime() const
     {
         return nTime;
+    }
+
+    int GetBlockVersion() const
+    {
+        return nVersion;
     }
 };
 
