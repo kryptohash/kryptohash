@@ -1944,7 +1944,7 @@ bool IsInitialBlockDownload()
         pindexLastBest = chainActive.Tip();
         nLastUpdate = GetTime();
     }
-    return (GetTime() - nLastUpdate < 10 && chainActive.Tip()->GetBlockTxTime() < GetTime() - 24 * 60 * 60 * 1000);
+    return (GetTime() - nLastUpdate < 10 && chainActive.Tip()->GetBlockTxTime() < GetTimeMillis() - 24 * 60 * 60 * 1000);
 }
 
 bool fLargeWorkForkFound = false;
@@ -3124,7 +3124,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
                     return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
                 }
             }
-            else if (TestNet() && nHeight > 50) {
+            else if (TestNet() && nHeight > 25) {
                 return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
             }
         }
@@ -4150,13 +4150,20 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             pfrom->fDisconnect = true;
             return false;
         }
-/*
+ 
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.4") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
+            // Handling of Network transition to KSHAKE320 v2 algorithm.
+            // Begin rejecting old Wallets with versions 0.4.x once Block 49,000 is mined or,
+            // if our blockchain is older than 1 day, reject immediately so, we download blocks
+            // only from new Wallets.
+            if ((MainNet() && (chainActive.Height() > nHEIGHT_49000 || (chainActive.Tip()->GetBlockTxTime() < GetTimeMillis() - 24 * 60 * 60 * 1000))) ||
+                (TestNet() && chainActive.Height() > 20)) {
+                LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
+                pfrom->fDisconnect = true;
+                return false;
+            }
         }
-*/
+
         if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }

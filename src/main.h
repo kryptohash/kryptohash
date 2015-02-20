@@ -90,6 +90,7 @@ static const int64_t nHEIGHT_5100 = 5100;
 static const int64_t nHEIGHT_5600 = 5600;
 static const int64_t nHEIGHT_5800 = 5800;
 static const int64_t nHEIGHT_6000 = 6000;
+static const int64_t nHEIGHT_49000 = 49000;
 static const int64_t nHEIGHT_50000 = 50000;
 
 
