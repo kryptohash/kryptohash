@@ -93,8 +93,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
-    // Switch to block version 2 at height 50,000
-    if ((chainActive.Tip()->nHeight + 1) > nHEIGHT_50000) {
+    // Switch to block version 2 at height 50,000 in MainNet
+    if ((MainNet() && (chainActive.Tip()->nHeight + 1) >= nHEIGHT_50000) ||
+        (TestNet() && (chainActive.Tip()->nHeight + 1) >= 25) ) {
         pblock->nVersion = 2;
     }
 
