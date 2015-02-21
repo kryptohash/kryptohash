@@ -718,9 +718,9 @@ void JSONRequest::parse(const Value& valRequest)
     if (valMethod.type() != str_type)
         throw JSONRPCError(RPC_INVALID_REQUEST, "Method must be a string");
     strMethod = valMethod.get_str();
-    if (strMethod != "getwork" && strMethod != "getblocktemplate")
-        LogPrint("rpc", "ThreadRPCServer method=%s\n", strMethod);
-
+    if (strMethod != "getwork" && strMethod != "getblocktemplate") {
+        LogPrint("rpc", "ThreadRPCServer method=%s\n", SanitizeString(strMethod));
+    }
     // Parse params
     Value valParams = find_value(request, "params");
     if (valParams.type() == array_type)
