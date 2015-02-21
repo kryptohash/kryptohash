@@ -380,7 +380,7 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     //
     // Pre-build hash buffers
     //
-#pragma pack(push,2)
+#pragma pack(push,4)
     struct
     {
         struct unnamed2
@@ -431,58 +431,6 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
 double dHashesPerSec = 0.0;
 int64_t nHPSTimerStart = 0;
 
-//
-// ScanHash scans nonces looking for a hash with at least some zero bits.
-// It operates on big endian data.  Caller does the byte reversing.
-// All input buffers are 16-byte aligned.  nNonce is usually preserved
-// between calls, but periodically or if nNonce is 0xffff0000 or above,
-// the block is rebuilt and nNonce starts over at zero.
-//
-unsigned int static ScanKryptoHash(Keccak_HashInstance *keccakHeader, char* pdata, char* phash, unsigned char* phash1, unsigned int& nHashesDone)
-{
-    uint32_t& nNonce = *(uint32_t*)(pdata + 4);
-
-    // KryptoHash Proof of Work uses SHAKE320 hash function. 
-    // It first hashes the 120 bytes long block header into a bitstream that is 'KPROOF_OF_WORK_SZ' bytes long.
-    // Then, the entire bitstream is hashed into a 40 bytes long final hash that has to meet the minimum proof
-    // of work provided in the block header nBits field.
-
-    for (;;)
-    {
-        Keccak_HashInstance keccakInstance;
-
-        // Make a copy of the keccak instance that contains the hash of the first 112 bytes of the block header.
-        keccakInstance = *keccakHeader;
-
-        // Using hash of the header that was previous calculated, hash pdata that has a new Nonce
-        // and store it into phash.
-        Keccak_HashUpdate(&keccakInstance, (BitSequence *)pdata, 8 * 8);
-        Keccak_HashFinal(&keccakInstance, NULL);
-        Keccak_HashSqueeze(&keccakInstance, (BitSequence *)phash1, KPROOF_OF_WORK_SZ);
-
-        // Now hash phash1 into phash using SHAKE320
-        SHAKE320(phash1, KPROOF_OF_WORK_SZ, (BitSequence *)phash, 40);
-
-        // Return the nonce if the hash has at least some zero bits,
-        // caller will check if it has enough to reach the target
-        if (((unsigned short*)phash)[19] == 0)
-            return nNonce;
-
-        // increment nonce. will try again.
-        nNonce++;
-
-        // If nothing found after trying for a while, return -1
-        if ((nNonce & 0x1fff) == 0)
-        {
-            nHashesDone = 0x1fff+1;
-            return (unsigned int) -1;
-        }
-
-        if ((nNonce & 0x3ff) == 0)
-            boost::this_thread::interruption_point();
-
-    }
-}
 
 CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey)
 {
@@ -530,6 +478,77 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     }
 
     return true;
+}
+
+#if 0 // Miner disabled for 2 reasons. 1) CPU mining way too slow; 2) it never actually worked
+
+//
+// ScanHash scans nonces looking for a hash with at least some zero bits.
+// It operates on big endian data.  Caller does the byte reversing.
+// All input buffers are 16-byte aligned.  nNonce is usually preserved
+// between calls, but periodically or if nNonce is 0xffff0000 or above,
+// the block is rebuilt and nNonce starts over at zero.
+//
+unsigned int static ScanKryptoHash(Keccak_HashInstance *keccakHeader, char* pdata, char* phash, unsigned char* phash1, unsigned int& nHashesDone, int version)
+{
+    uint32_t& nNonce = *(uint32_t*)(pdata + 4);
+
+    // KryptoHash Proof of Work uses SHAKE320 hash function. 
+    // It first hashes the 120 bytes long block header into a bitstream that is 'KPROOF_OF_WORK_SZ' bytes long.
+    // Then, the entire bitstream is hashed into a 40 bytes long final hash that has to meet the minimum proof
+    // of work provided in the block header nBits field.
+
+    for (;;)
+    {
+        Keccak_HashInstance keccakInstance;
+
+        // Make a copy of the keccak instance that contains the hash of the first 112 bytes of the block header.
+        keccakInstance = *keccakHeader;
+
+        // Using hash of the header that was previous calculated, hash pdata that has a new Nonce
+        // and store it into phash.
+        Keccak_HashUpdate(&keccakInstance, (BitSequence *)pdata, 8 * 8);
+        Keccak_HashFinal(&keccakInstance, NULL);
+        Keccak_HashSqueeze(&keccakInstance, (BitSequence *)phash1, KPROOF_OF_WORK_SZ * 8);
+
+        if (version <= 1) {
+	        // Now hash phash1 into phash using SHAKE320
+            SHAKE320(phash1, KPROOF_OF_WORK_SZ * 8, (BitSequence *)phash, 40);
+        }
+        else {
+            // Swap blocks in chunks of KRATE size
+            unsigned char *p1 = phash1 + KPROOF_OF_WORK_SZ;
+            unsigned char scratchpad2[KPROOF_OF_WORK_SZ + 16];
+            unsigned char *p2 = alignup<16>(scratchpad2);
+
+            for (int i = 0; i < KPOW_MUL; i++)
+            {
+                p1 -= KRATE;
+                memcpy(p2, p1, KRATE);
+                p2 += KRATE;
+            }
+            SHAKE320(scratchpad2, KPROOF_OF_WORK_SZ * 8, (BitSequence *)phash, 40);
+        }
+
+        // Return the nonce if the hash has at least some zero bits,
+        // caller will check if it has enough to reach the target
+        if (((unsigned short*)phash)[19] == 0)
+            return nNonce;
+
+        // increment nonce. will try again.
+        nNonce++;
+
+        // If nothing found after trying for a while, return -1
+        if ((nNonce & 0x1fff) == 0)
+        {
+            nHashesDone = 0x1fff+1;
+            return (unsigned int) -1;
+        }
+
+        if ((nNonce & 0x3ff) == 0)
+            boost::this_thread::interruption_point();
+
+    }
 }
 
 void static KryptohashMiner(CWallet *pwallet)
@@ -581,6 +600,7 @@ void static KryptohashMiner(CWallet *pwallet)
 
             FormatKryptoHashBuffers(pblock, &keccakHeader, pdata);
 
+            int32_t& nVersion     = *(int32_t *)(pdata +   0);
             uint32_t& nBlockTime  = *(uint32_t*)(pdata + 112);
             uint32_t& nBlockNonce = *(uint32_t*)(pdata + 116);
 
@@ -602,7 +622,7 @@ void static KryptohashMiner(CWallet *pwallet)
                 unsigned int nNonceFound;
 
                 // Kryptohash 320bits
-                nNonceFound = ScanKryptoHash(&keccakHeader, pdata + 112, (char*)&hash, hash1, nHashesDone);
+                nNonceFound = ScanKryptoHash(&keccakHeader, pdata + 112, (char*)&hash, hash1, nHashesDone, nVersion);
 
                 // Check if something found
                 if (nNonceFound != (unsigned int) -1)

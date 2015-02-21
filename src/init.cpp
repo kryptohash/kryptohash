@@ -120,7 +120,9 @@ void Shutdown()
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         bitdb.Flush(false);
+ #if 0
     GenerateCoins(false, NULL, 0);
+ #endif
 #endif
     StopNode();
     UnregisterNodeSignals(GetNodeSignals());
@@ -198,7 +200,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -region=<n>            " + _("Specify region number (range: 0 - 255; default: 0)") + "\n";
     strUsage += "  -testnet               " + _("Use the test network") + "\n";
     strUsage += "  -pid=<file>            " + _("Specify pid file (default: kryptohashd.pid)") + "\n";
-#ifdef ENABLE_WALLET
+#if 0 //def ENABLE_WALLET
     strUsage += "  -gen                   " + _("Generate coins (default: 0)") + "\n";
     strUsage += "  -genproclimit=<n>      " + _("Set the processor limit for when generation is on (-1 = unlimited, default: -1)") + "\n";
 #endif
@@ -1137,7 +1139,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (fServer)
         StartRPCThreads();
 
-#ifdef ENABLE_WALLET
+#if 0 //def ENABLE_WALLET
     // Generate coins in the background
     if (pwalletMain)
         GenerateCoins(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", -1));

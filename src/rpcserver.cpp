@@ -210,10 +210,10 @@ Value stop(const Array& params, bool fHelp)
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "stop\n"
-            "\nStop Bitcoin server.");
+            "\nStop Kryptohash server.");
     // Shutdown will take long enough that the response should get back
     StartShutdown();
-    return "Bitcoin server stopping";
+    return "Kryptohash server stopping";
 }
 
 
@@ -317,10 +317,13 @@ static const CRPCCommand vRPCCommands[] =
     { "walletpassphrase",       &walletpassphrase,       true,      false,      true },
 
     /* Wallet-enabled mining */
+    { "getwork",                &getwork,                true,      false,      true },
+#if 0
     { "getgenerate",            &getgenerate,            true,      false,      false },
     { "gethashespersec",        &gethashespersec,        true,      false,      false },
-    { "getwork",                &getwork,                true,      false,      true },
     { "setgenerate",            &setgenerate,            true,      true,       false },
+#endif
+
 #endif // ENABLE_WALLET
 };
 

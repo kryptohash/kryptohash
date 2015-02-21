@@ -113,7 +113,7 @@ Value getnetworkhashps(const Array& params, bool fHelp)
     return GetNetworkHashPS(params.size() > 0 ? params[0].get_int() : 120, params.size() > 1 ? params[1].get_int() : -1);
 }
 
-#ifdef ENABLE_WALLET
+#if 0 //def ENABLE_WALLET
 Value getgenerate(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -267,7 +267,7 @@ Value getmininginfo(const Array& params, bool fHelp)
     obj.push_back(Pair("networkhashps",    getnetworkhashps(params, false)));
     obj.push_back(Pair("pooledtx",         (uint64_t)mempool.size()));
     obj.push_back(Pair("testnet",          TestNet()));
-#ifdef ENABLE_WALLET
+#if 0 //def ENABLE_WALLET
     obj.push_back(Pair("generate",         getgenerate(params, false)));
     obj.push_back(Pair("hashespersec",     gethashespersec(params, false)));
 #endif
