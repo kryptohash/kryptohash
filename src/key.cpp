@@ -169,7 +169,7 @@ bool CKey::Sign(const uint256 &hashIn, std::vector<unsigned char>& vchSig, const
     uint320 target = ~uint320(0) >> nZeroBytes * 8;
     for (;;)
     {
-        if (KryptoHash(vchSig.begin(), vchSig.end()) <= target) {
+        if (KSHAKE320v2(vchSig.begin(), vchSig.end()) <= target) {
             break;
         }
         nNonce++;
@@ -223,7 +223,7 @@ bool CKey::Sign(const uint256 &hashIn, std::vector<unsigned char>& vchSig, const
 
     for (;;)
     {
-        if (KryptoHash(vchSig.begin(), vchSig.end()) <= target) {
+        if (KSHAKE320v2(vchSig.begin(), vchSig.end()) <= target) {
             break;
         }
         nNonce++;
