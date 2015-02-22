@@ -895,10 +895,14 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     if (tx.nTxTime <= 0) {
         return state.DoS(100, error("AcceptToMemoryPool: : incorrect timestamp"), REJECT_INVALID, "timestamp");
     }
-    // Timestamp must be within 100 hours of current time, except in testnet/regnet.
-    int64_t nCurrTime = GetTimeMillis();
-    if ((tx.nTxTime < (nCurrTime - 180000000) || tx.nTxTime >(nCurrTime + 180000000)) && MainNet() ) {
-        return state.DoS(100, error("AcceptToMemoryPool: : timestamp outside range"), REJECT_INVALID, "timestamp");
+    int64_t nCurrTime = GetAdjustedTime() * 1000; // In milliseconds
+    // Timestamp cannot be older than 2 weeks of current time, except in testnet/regnet.
+    if (MainNet() && (tx.nTxTime < nCurrTime - 14 * 24 * 60 * 60 * 1000)) {
+        return state.DoS(100, error("AcceptToMemoryPool: : timestamp older than 2 weeks"), REJECT_INVALID, "timestamp");
+    }
+    // Timestamp cannot be more than 24 hours in the future, except in testnet/regnet.
+    if (MainNet() && (tx.nTxTime > nCurrTime + 24 * 60 * 60 * 1000)) {
+        return state.DoS(100, error("AcceptToMemoryPool: : timestamp too far in the future"), REJECT_INVALID, "timestamp");
     }
     // Reject non-zero #Coin for now. Future enhancement.
     if (tx.nHashCoin) // && (hdr.nHashCoin & Params().GetHashCoinMask()) == 0)
