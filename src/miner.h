@@ -17,10 +17,6 @@ class CReserveKey;
 class CScript;
 class CWallet;
 
-#if 0
-/** Run the miner threads */
-void GenerateCoins(bool fGenerate, CWallet* pwallet, int nThreads);
-#endif
 /** Generate a new block, without valid proof-of-work */
 CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn);
 CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey);
@@ -36,7 +32,12 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey);
 /** Base sha256 mining transform */
 void SHA256Transform(void* pstate, void* pinput, const void* pinit);
 
+#if 0
+/** Run the miner threads */
+void GenerateCoins(bool fGenerate, CWallet* pwallet, int nThreads);
+
 extern double dHashesPerSec;
 extern int64_t nHPSTimerStart;
+#endif
 
 #endif // BITCOIN_MINER_H

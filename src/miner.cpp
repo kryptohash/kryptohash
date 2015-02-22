@@ -424,13 +424,6 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
 
 
 #ifdef ENABLE_WALLET
-//////////////////////////////////////////////////////////////////////////////
-//
-// Internal miner
-//
-double dHashesPerSec = 0.0;
-int64_t nHPSTimerStart = 0;
-
 
 CBlockTemplate* CreateNewBlockWithKey(CReserveKey& reservekey)
 {
@@ -480,7 +473,16 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     return true;
 }
 
-#if 0 // Miner disabled for 2 reasons. 1) CPU mining way too slow; 2) it never actually worked
+#if 0 
+// Internal miner disabled for 2 reasons. 1) CPU mining way too slow; 2) it never actually worked.
+
+//////////////////////////////////////////////////////////////////////////////
+//
+// Internal miner
+//
+double dHashesPerSec = 0.0;
+int64_t nHPSTimerStart = 0;
+
 
 //
 // ScanHash scans nonces looking for a hash with at least some zero bits.
@@ -735,3 +737,4 @@ void GenerateCoins(bool fGenerate, CWallet* pwallet, int nThreads)
 
 #endif
 
+#endif // ENABLE_WALLET
