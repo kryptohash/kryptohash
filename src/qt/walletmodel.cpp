@@ -239,10 +239,10 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         return AmountExceedsBalance;
     }
 
-    int64_t nFlatFee = (int64_t)(total * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
-                       (int64_t)(total * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
+    qint64 nFlatFee = (qint64)((double)total * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
+                      (qint64)((double)total * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
 
-    if ((total + nFlatFee + nTransactionFee) > nBalance)
+    if ((total + nFlatFee + (qint64)nTransactionFee) > nBalance)
     {
         transaction.setTransactionFee(nFlatFee + nTransactionFee);
         return SendCoinsReturn(AmountWithFeeExceedsBalance);

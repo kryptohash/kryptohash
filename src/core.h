@@ -20,6 +20,13 @@ class CTransaction;
 static const int64_t MAX_MONEY = 10000000000000 * COIN;
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 
+// flat fee per transaction value
+static const double FLAT_FEE_PER_TRANSACTION = 0.002;
+// Min flat fee in kryptohash-toshis
+static const int64_t MIN_FLAT_TRANSACTION_FEE = 10;
+#define FLAT_TRANSACTION_FEE(x, y) \
+        (min(x, (int64_t)((double)y * FLAT_FEE_PER_TRANSACTION)))
+
 /** An outpoint - a combination of a transaction hash and an index n into its vout */
 class COutPoint
 {
@@ -267,6 +274,8 @@ public:
     // GetValueIn() is a method on CCoinsViewCache, because
     // inputs must be known to compute value in.
 
+    int64_t GetFlatFee() const;
+
     // Compute priority, given priority of inputs and (optionally) tx size
     double ComputePriority(double dPriorityInputs, unsigned int nTxSize=0) const;
 
@@ -420,7 +429,7 @@ class CBlockHeader
 {
 public:
     // header
-    static const int CURRENT_VERSION=1;
+    static const int CURRENT_VERSION=2;
     int nVersion;
     int nRegion;
     uint320  hashPrevBlock;

@@ -1264,8 +1264,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
         return false;
     }
     
-    int64_t nFlatFee = (int64_t)(nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
-                       (int64_t)(nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
+    int64_t nFlatFee = (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
+                       (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
 
     wtxNew.BindWallet(this);
     {
@@ -1505,8 +1505,8 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
         return _("Invalid amount");
     }
 
-    int64_t nFlatFee = (int64_t)(nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
-                       (int64_t)(nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
+    int64_t nFlatFee = (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
+                       (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
 
     if (nValue + nFlatFee + nTransactionFee > GetBalance()) {
         int64_t maxtobesent = GetBalance() - nFlatFee - nTransactionFee;

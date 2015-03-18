@@ -855,9 +855,7 @@ int64_t GetMinFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree, 
         }
     }
 
-    // This code can be removed after enough miners have upgraded to version 0.9.
-    // Until then, be safe when sending and require a fee if any output
-    // is less than CENT:
+    // require a fee if any output is less than CENT
     if (nMinFee < nBaseFee && mode == GMF_SEND) {
         BOOST_FOREACH(const CTxOut& txout, tx.vout) {
             if (txout.nValue < CENT) {
@@ -892,17 +890,17 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         return state.DoS(100, error("AcceptToMemoryPool: : coinshare as individual tx"), REJECT_INVALID, "coinshare");
     }
     // Timestamp must be valid
-    if (tx.nTxTime <= 0) {
-        return state.DoS(100, error("AcceptToMemoryPool: : incorrect timestamp"), REJECT_INVALID, "timestamp");
+    if (tx.nTxTime < 0x149aba00000) {
+        return state.DoS(100, error("AcceptToMemoryPool: : timestamp before genesis"), REJECT_INVALID, "timestamp");
     }
     int64_t nCurrTime = GetAdjustedTime() * 1000; // In milliseconds
-    // Timestamp cannot be older than 2 weeks of current time, except in testnet/regnet.
-    if (MainNet() && (tx.nTxTime < nCurrTime - 14 * 24 * 60 * 60 * 1000)) {
-        return state.DoS(100, error("AcceptToMemoryPool: : timestamp older than 2 weeks"), REJECT_INVALID, "timestamp");
-    }
     // Timestamp cannot be more than 24 hours in the future, except in testnet/regnet.
-    if (MainNet() && (tx.nTxTime > nCurrTime + 24 * 60 * 60 * 1000)) {
-        return state.DoS(100, error("AcceptToMemoryPool: : timestamp too far in the future"), REJECT_INVALID, "timestamp");
+    if (MainNet() && (tx.nTxTime > nCurrTime + 2 * 60 * 60 * 1000)) {
+        return state.DoS(100, error("AcceptToMemoryPool: : tx timestamp too far in the future"), REJECT_INVALID, "timestamp");
+    }
+    // Timestamp cannot be older than 2 weeks of current time, except during re-index, importing or when downloading blocks.
+    if (!IsInitialBlockDownload() && (tx.nTxTime < nCurrTime - 14 * 24 * 60 * 60 * 1000)) {
+        return state.DoS(100, error("AcceptToMemoryPool: : tx timestamp too old"), REJECT_INVALID, "timestamp");
     }
     // Reject non-zero #Coin for now. Future enhancement.
     if (tx.nHashCoin) // && (hdr.nHashCoin & Params().GetHashCoinMask()) == 0)
@@ -981,6 +979,9 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
         int64_t nValueIn = view.GetValueIn(tx);
         int64_t nValueOut = tx.GetValueOut();
         int64_t nFees = nValueIn-nValueOut;
+        if (!IsInitialBlockDownload() && nFees < tx.GetFlatFee()) {
+            return state.DoS(0, error("AcceptToMemoryPool : not enough flat fee"), REJECT_INSUFFICIENTFEE, "insufficient flat fee");
+        }
         double dPriority = view.GetPriority(tx, chainActive.Height());
 
         CTxMemPoolEntry entry(tx, nFees, GetTime(), dPriority, chainActive.Height());
@@ -1271,7 +1272,8 @@ nHeight:      100 to     999 -> A fixed subsidy of 50 Coins plus a random subsid
 nHeight:    1,000 to   9,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to 199 extra Coins.
 nHeight:   10,000 to  99,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to  99 extra Coins.
 nHeight:  100,000 to 124,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to  49 extra Coins.
-nHeight:  125,000+           -> A fixed subsidy of 50 Coins.
+nHeight:  125,000 to 249,999 -> A fixed subsidy of 50 Coins.
+nHeight:  250,000+           -> A fixed subsidy of 25 Coins.
 */
 int64_t GetBlockValue(int64_t nHeight, int64_t nFees, const uint320 previousHash)
 {
@@ -1303,6 +1305,9 @@ int64_t GetBlockValue(int64_t nHeight, int64_t nFees, const uint320 previousHash
                 nSubsidy += (int64_t)(rand % nSubsidyFactor);
             }
         }
+    }
+    else if (nHeight >= nHEIGHT_250000) {
+        nSubsidy = 25;
     }
     return nSubsidy * COIN + nFees;
 }
@@ -1756,21 +1761,27 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         }
 
         if (!nbits) {
-            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
-            // Store the calculated Difficulty and block Height 
-            PIDctrl.SetDelta(nDeltaDiff);
-            PIDctrl.SetHeight(pindexLast->nHeight);
+            // If Height in PID is current, use the stored Delta Diff
+            if (pindexLast->nHeight > 0 && pindexLast->nHeight == PIDctrl.GetHeight()) {
+                nDeltaDiff = PIDctrl.GetDelta();
+            }
+            else {
+	            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+	            // Store the calculated Difficulty and block Height 
+	            PIDctrl.SetDelta(nDeltaDiff);
+	            PIDctrl.SetHeight(pindexLast->nHeight);
+            }
             nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
     }
-        else {
+    else {
         if (PIDctrl.GetHeight() < nLastPIDCheckpoint) {
             // Load PID with last checkpoint
             const CPID *PID = PIDCheckpoints::GetPIDCheckpoint(nLastPIDCheckpoint);
             if (PID) {
                 PIDctrl = *PID;
-        }
-    }
+	        }
+	    }
         // If Height in PID is current, use the stored Delta Diff
         if (pindexLast->nHeight > 0 && pindexLast->nHeight == PIDctrl.GetHeight()) {
             nDeltaDiff = PIDctrl.GetDelta();
@@ -4156,16 +4167,9 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
         }
  
         if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.4") != std::string::npos) {
-            // Handling of Network transition to KSHAKE320 v2 algorithm.
-            // Begin rejecting old Wallets with versions 0.4.x once Block 49,000 is mined or,
-            // if our blockchain is older than 1 day, reject immediately so, we download blocks
-            // only from new Wallets.
-            if ((MainNet() && (chainActive.Height() > nHEIGHT_49000 || (chainActive.Tip()->GetBlockTxTime() < GetTimeMillis() - 24 * 60 * 60 * 1000))) ||
-                (TestNet() && chainActive.Height() > 20)) {
-                LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
-                pfrom->fDisconnect = true;
-                return false;
-            }
+            LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
+            pfrom->fDisconnect = true;
+            return false;
         }
 
         if (!vRecv.empty()) {

@@ -49,13 +49,14 @@ namespace Checkpoints
         (5900, uint320("00000017EB2CD60A7D328340F4B37BC1A99B89D18BC09C3840B611FA1C701FD50271E54CBFD72E23"))
         (8600, uint320("0000000161808757702034BF82F3C8764FABF0EC6C1E4075C4F3081705225AF36F9B2E22B13A150F"))
         (9100, uint320("000000022CA3F85EAE7CC50023B7AF2FC460BFFC015E79F4CDE7E1931A02F38960889980A39CC889"))
+        (50000, uint320("0000000474061A227E8B28D6386A576EA85A1403A6CF24A9A43A1307BDC6F0EDEEA5E57F7CCD75D1"))
         ;
     static const CCheckpointData data = {
         &mapCheckpoints,
-        0x14A479D5160, //0x149aba00000, // * UNIX timestamp of last checkpoint block
-        23326,         // * total number of transactions between genesis and last checkpoint
+        0x14C24DE7120, // * UNIX timestamp of last checkpoint block
+        129262,        // * total number of transactions between genesis and last checkpoint
                        //   (the tx=... number in the SetBestChain debug.log lines)
-        60000.0        // * estimated number of transactions per day after checkpoint
+        10000.0        // * estimated number of transactions per day after checkpoint
     };
 
     static MapCheckpoints mapCheckpointsTestnet =
@@ -124,13 +125,13 @@ namespace Checkpoints
         if (pindex->nChainTx <= data.nTransactionsLastCheckpoint) {
             double nCheapBefore = pindex->nChainTx;
             double nCheapAfter = data.nTransactionsLastCheckpoint - pindex->nChainTx;
-            double nExpensiveAfter = (nNow - data.nTimeLastCheckpoint)/86400.0*data.fTransactionsPerDay;
+            double nExpensiveAfter = (nNow - data.nTimeLastCheckpoint/1000)/86400.0*data.fTransactionsPerDay;
             fWorkBefore = nCheapBefore;
             fWorkAfter = nCheapAfter + nExpensiveAfter*fSigcheckVerificationFactor;
         } else {
             double nCheapBefore = data.nTransactionsLastCheckpoint;
             double nExpensiveBefore = pindex->nChainTx - data.nTransactionsLastCheckpoint;
-            double nExpensiveAfter = (nNow - pindex->nTime)/86400.0*data.fTransactionsPerDay;
+            double nExpensiveAfter = (nNow - pindex->nTxTime/1000)/86400.0*data.fTransactionsPerDay;
             fWorkBefore = nCheapBefore + nExpensiveBefore*fSigcheckVerificationFactor;
             fWorkAfter = nExpensiveAfter*fSigcheckVerificationFactor;
         }
@@ -187,10 +188,11 @@ namespace PIDCheckpoints
         (5900, CPID(180.0f, 1.0f, 0.05f, 0.1f, 256.0f, 102.0f, 62.0f, 0, 5899, 108.30000305f, 0x251a64ff))
         (8600, CPID(180.0f, 1.0f, 0.05f, 0.1f, 201.0f, -30.0f,-25.0f, 0, 8599, -25.75000000f, 0x2501aeff))
         (9100, CPID(180.0f, 1.0f, 0.05f, 0.1f, -41.000000f, -79.000000f, -44.000000f, 0, 9099, -76.85000610f, 0x25028aff))
+        (50000, CPID(180.0f, 1.0f, 0.05f, 0.1f, -256.000000f, -54.000000f, -37.000000f, 0, 49999, -70.50000000f, 0x250493ff))
         ;
     static const CPIDCheckpointData data = {
         &mapPIDCheckpoints,
-        0x14A479D5160, // * timestamp of last PID checkpoint
+        0x14C24DE7120, // * timestamp of last PID checkpoint
     };
 
     static MapPIDCheckpoints mapPIDCheckpointsTestnet =

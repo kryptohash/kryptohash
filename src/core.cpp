@@ -135,6 +135,19 @@ int64_t CTransaction::GetValueOut() const
     return nValueOut;
 }
 
+int64_t CTransaction::GetFlatFee() const
+{
+    int64_t nFeeValue = GetValueOut();
+    BOOST_FOREACH(const CTxOut& txout, vout)
+    {
+        nFeeValue = FLAT_TRANSACTION_FEE(nFeeValue, txout.nValue);
+    }
+    if (nFeeValue < MIN_FLAT_TRANSACTION_FEE) {
+        nFeeValue = MIN_FLAT_TRANSACTION_FEE;
+    }
+    return nFeeValue;
+}
+
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
 {
     // In order to avoid disincentivizing cleaning up the UTXO set we don't count

@@ -879,8 +879,8 @@ Value sendmany(const Array& params, bool fHelp)
     EnsureWalletIsUnlocked();
 
     // Check funds
-    int64_t nFlatFee = (int64_t)(totalAmount * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
-                       (int64_t)(totalAmount * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
+    int64_t nFlatFee = (int64_t)((double)totalAmount * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
+                       (int64_t)((double)totalAmount * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
 
     int64_t nBalance = GetAccountBalance(strAccount, nMinDepth);
     if (totalAmount + nFlatFee > nBalance) {

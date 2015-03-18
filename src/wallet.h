@@ -28,10 +28,6 @@
 extern int64_t nTransactionFee;
 extern bool bSpendZeroConfChange;
 
-// flat fee per transaction value
-static const double FLAT_FEE_PER_TRANSACTION = 0.005;
-// Min flat fee in kryptohash-toshis
-static const int64_t MIN_FLAT_TRANSACTION_FEE = 5;
 // -paytxfee default
 static const int64_t DEFAULT_TRANSACTION_FEE = 0;
 // -paytxfee will warn if called with a higher fee than this amount (in kryptohash-toshis) per KB

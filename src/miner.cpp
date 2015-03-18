@@ -93,11 +93,13 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
+#if 0 // No longer needed after block 50,000 because, CBlockHeader::CURRENT_VERSION is now set to 2
     // Switch to block version 2 at height 50,000 in MainNet
     if ((MainNet() && (chainActive.Tip()->nHeight + 1) >= nHEIGHT_50000) ||
         (TestNet() && (chainActive.Tip()->nHeight + 1) >= 25) ) {
         pblock->nVersion = 2;
     }
+#endif
 
     // Create coinbase tx
     CTransaction txNew;
