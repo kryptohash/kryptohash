@@ -6,7 +6,7 @@ To Build
 ---------------------
 
 	./autogen.sh
-	CPPFLAGS="-Ikeccak -Ikeccak/SnP -Ikeccak/KeccakF-1600 -I/usr/local/include" LDFLAGS="-L/usr/local/lib -Wl,-rpath=/usr/local/lib" ./configure (see below for additional config options)
+	CPPFLAGS="-Ikeccak -Ikeccak/SnP -Ikeccak/KeccakF-1600" ./configure (see below for additional config options)
 	make
 
 This will build kryptohash-qt as well if the dependencies are met.
@@ -59,17 +59,10 @@ Build requirements:
 	sudo apt-get install build-essential
 	sudo apt-get install libtool autotools-dev autoconf
 	sudo apt-get install libssl-dev
+    sudo apt-get install libboost-all-dev
 
-Boost:
-	Download Boost 1.57 source code from http://sourceforge.net/projects/boost/files/boost/1.57.0/
-	Build boost using: 
-
-	sudo su
-	./bootstrap.sh
-	./bjam cxxflags="-std=c++11" install
-
-Note that kryptohash requires boost to be built with c++11 option.	
-	
+Then, add to  
+		
 for Ubuntu 12.04 and later & Debian:
 
 	sudo apt-get install libdb5.3-dev
@@ -93,19 +86,12 @@ To build with Qt 4 you need the following:
 
 For Qt 5 you need the following:
 
-    apt-get install libqt5gui5 libqt5core5 libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev
+    apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
 
 libqrencode (optional) can be installed with:
 
     apt-get install libqrencode-dev
 	
-protoc (required to build Qt)
-	Download protobuf 2.5.0 source code from http://code.google.com/p/protobuf/downloads/list
-	Build protoc with:
-	
-	./configure --disable-shared
-	make
-	sudo make install
 
 Once these are installed, they will be found by configure and a kryptohash-qt executable will be
 built by default.
@@ -134,6 +120,20 @@ You need Berkeley DB 5.3.  If you have to build Berkeley DB yourself:
 	make
 	sudo make install
 
+
+Boost
+-----
+If you have to build Boost yourself:
+
+	Download Boost 1.57 source code from http://sourceforge.net/projects/boost/files/boost/1.57.0/
+	Build boost using: 
+
+	sudo su
+	./bootstrap.sh
+	./bjam install
+
+	run ./configure using the below CPPFLAGS and LDFLAGS
+	CPPFLAGS="-Ikeccak -Ikeccak/SnP -Ikeccak/KeccakF-1600 -I/usr/local/include" LDFLAGS="-L/usr/local/lib -Wl,-rpath=/usr/local/lib" ./configure (additional config options)
 	
 
 Security
