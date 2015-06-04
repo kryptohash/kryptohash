@@ -109,17 +109,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
     // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
-
-    // Allow the creation of blocks larger than 1Mb only after height 250,000 in MainNet
-    if ((MainNet() && (chainActive.Tip()->nHeight + 1) < nHEIGHT_250000) || (TestNet() && (chainActive.Tip()->nHeight + 1) < 250)) {
-        // Before height 250,000, limit block size to between 1K and 999,000 bytes, regardless of MAX_BLOCK_SIZE.
-        nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(OLD_MAX_BLOCK_SIZE - 1000), nBlockMaxSize));
-    }
-    else 
-    {
-        // On height 250,000, increase the limit to betweeen 1K and MAX_BLOCK_SIZE - 1K:
-        nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
-    }
+    // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity. After height 150,000 we allow miners to create larger blocks.
+    const int nBlkSizeLimit = (MainNet() && (chainActive.Tip()->nHeight + 1) > nHEIGHT_150000) ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(nBlkSizeLimit - 1000), nBlockMaxSize));
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay

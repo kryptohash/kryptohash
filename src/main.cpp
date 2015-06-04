@@ -2616,7 +2616,7 @@ void static UpdateTip(CBlockIndex *pindexNew)
         }
     }
     // Check if the network can begin accepting larger block size
-    if (!fNewBlockSizeLimit && chainActive.Height() > nHEIGHT_150000) {
+    if (!fNewBlockSizeLimit && MainNet() && chainActive.Height() >= nHEIGHT_150000) {
         fNewBlockSizeLimit = true;
     }
 }
@@ -3064,7 +3064,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     BOOST_FOREACH(const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    if (nSigOps > MAX_BLOCK_SIGOPS) {
+    const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+    if (nSigOps > nSigOpsLimit) {
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"), REJECT_INVALID, "bad-blk-sigops", true);
     }
     // Check merkle root
@@ -3140,18 +3141,18 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (pcheckpoint && nHeight < pcheckpoint->nHeight) {
             return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
         }
-        // Kryptohash block versions begin with 1.
-        if (block.GetBlockVersion() < 1) {
+        // Kryptohash block versions began with 1 but, this version is now obsolete.
+        if (block.GetBlockVersion() <= 1) {
             return state.Invalid(error("AcceptBlock() : rejected incorrect nVersion block"), REJECT_OBSOLETE, "bad-version");
         }
-        // Reject version=1 blocks after height 50,000 and only when 90% of the network has upgraded:
-        if (block.GetBlockVersion() < 2) {
-            if (MainNet() && nHeight > nHEIGHT_50000) {
-                if (CBlockIndex::IsSuperMajority(2, pindexPrev, 900, 1000)) {
-                    return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
+        // Reject version=2 blocks after height 150,000 and only when 90% of the network has upgraded:
+        if (block.GetBlockVersion() < 3) {
+            if (MainNet() && nHeight > nHEIGHT_125000) {
+                if (fNewBlockSizeLimit || CBlockIndex::IsSuperMajority(2, pindexPrev, 900, 1000)) {
+                    return state.Invalid(error("AcceptBlock() : rejected nVersion=2 block"), REJECT_OBSOLETE, "bad-version");
                 }
             }
-            else if (TestNet() && nHeight > 25) {
+            else if (TestNet() && nHeight > 250) {
                 return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
             }
         }
