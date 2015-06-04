@@ -1124,6 +1124,10 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     RandAddSeedPerfmon();
 
+    // Check if the network can begin accepting larger block size
+    if (chainActive.Height() > nHEIGHT_150000)
+        fNewBlockSizeLimit = true;
+
     //// debug print
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
     LogPrintf("nBestHeight = %d\n",                   chainActive.Height());

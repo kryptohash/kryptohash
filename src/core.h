@@ -429,7 +429,7 @@ class CBlockHeader
 {
 public:
     // header
-    static const int CURRENT_VERSION=2;
+    static const int CURRENT_VERSION=3;
     int nVersion;
     int nRegion;
     uint320  hashPrevBlock;

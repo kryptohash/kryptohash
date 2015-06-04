@@ -35,7 +35,9 @@ class CBloomFilter;
 class CInv;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_SIZE = 1000000;
+static const unsigned int MAX_BLOCK_SIZE = 10000000;
+/** The old maximum allowed size for a serialized block, in bytes (network rule) */
+static const unsigned int OLD_MAX_BLOCK_SIZE = 1000000;
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 750000;
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
@@ -45,6 +47,8 @@ static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 50000;
 static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
+/** The old maximum allowed number of signature check operations in a block (network rule) */
+static const unsigned int OLD_MAX_BLOCK_SIGOPS = OLD_MAX_BLOCK_SIZE / 50;
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
 /** Default for -maxorphanblocks, maximum number of orphan blocks kept in memory */
@@ -92,6 +96,8 @@ static const int64_t nHEIGHT_5800 = 5800;
 static const int64_t nHEIGHT_6000 = 6000;
 static const int64_t nHEIGHT_49000 = 49000;
 static const int64_t nHEIGHT_50000 = 50000;
+static const int64_t nHEIGHT_125000 = 125000;
+static const int64_t nHEIGHT_150000 = 150000;
 static const int64_t nHEIGHT_250000 = 250000;
 
 
@@ -108,6 +114,7 @@ extern bool fReindex;
 extern bool fBenchmark;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
+extern bool fNewBlockSizeLimit;
 extern unsigned int nCoinCacheSize;
 
 // Minimum disk space required - used in CheckDiskSpace()

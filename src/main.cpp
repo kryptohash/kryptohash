@@ -50,6 +50,7 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
+bool fNewBlockSizeLimit = false;
 unsigned int nCoinCacheSize = 5000;
 
 /** Fees smaller than this (in krytohash-toshi) are considered zero fee (for transaction creation) */
@@ -791,7 +792,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
         return state.DoS(10, error("CheckTransaction() : vout empty"), REJECT_INVALID, "bad-txns-vout-empty");
     }
     // Size limits
-    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE) {
+    const int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
         return state.DoS(100, error("CheckTransaction() : size limits failed"), REJECT_INVALID, "bad-txns-oversize");
     }
     // Check for negative or overflow output values
@@ -1981,7 +1983,7 @@ void CheckForkWarningConditions()
     }
     if (pindexBestForkTip || (pindexBestInvalid && pindexBestInvalid->nChainWork > chainActive.Tip()->nChainWork + (chainActive.Tip()->GetBlockWork() * 6).getuint320()))
     {
-        if (!fLargeWorkForkFound)
+        if (!fLargeWorkForkFound && pindexBestForkBase)
         {
             std::string strCmd = GetArg("-alertnotify", "");
             if (!strCmd.empty())
@@ -1992,7 +1994,7 @@ void CheckForkWarningConditions()
                 boost::thread t(runCommand, strCmd); // thread runs free
             }
         }
-        if (pindexBestForkTip)
+        if (pindexBestForkTip && pindexBestForkBase)
         {
             LogPrintf("CheckForkWarningConditions: Warning: Large valid fork found\n  forking the chain at height %d (%s)\n  lasting to height %d (%s).\nChain state database corruption likely.\n",
                    pindexBestForkBase->nHeight, pindexBestForkBase->phashBlock->ToString(),
@@ -2440,6 +2442,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     int64_t nFees = 0;
     int nInputs = 0;
     unsigned int nSigOps = 0;
+    const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
     CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
     std::vector<std::pair<uint320, CDiskTxPos> > vPos;
     vPos.reserve(block.vtx.size());
@@ -2449,7 +2452,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
 
         nInputs += tx.vin.size();
         nSigOps += GetLegacySigOpCount(tx);
-        if (nSigOps > MAX_BLOCK_SIGOPS) {
+        if (nSigOps > nSigOpsLimit) {
             return state.DoS(100, error("ConnectBlock() : too many sigops"), REJECT_INVALID, "bad-blk-sigops");
         }
         if (!tx.IsCoinBase()) {
@@ -2462,7 +2465,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 // this is to prevent a "rogue miner" from creating
                 // an incredibly-expensive-to-validate block.
                 nSigOps += GetP2SHSigOpCount(tx, view);
-                if (nSigOps > MAX_BLOCK_SIGOPS) {
+                if (nSigOps > nSigOpsLimit) {
                     return state.DoS(100, error("ConnectBlock() : too many sigops"), REJECT_INVALID, "bad-blk-sigops");
                 }
             }
@@ -2611,6 +2614,10 @@ void static UpdateTip(CBlockIndex *pindexNew)
             // strMiscWarning is read by GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
             strMiscWarning = _("Warning: This version is obsolete, upgrade required!");
         }
+    }
+    // Check if the network can begin accepting larger block size
+    if (!fNewBlockSizeLimit && chainActive.Height() > nHEIGHT_150000) {
+        fNewBlockSizeLimit = true;
     }
 }
 
@@ -2997,9 +3004,14 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     if (!CheckBlockHeader(block, state, fCheckPOW)) {
         return false;
     }
-    // Size limits
-    if (block.vtx.empty() || block.vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE) {
-        return state.DoS(100, error("CheckBlock() : size limits failed"), REJECT_INVALID, "bad-blk-length");
+    // Tx size check
+    if (block.vtx.empty()) {
+        return state.DoS(100, error("CheckBlock() : block has no Tx"), REJECT_INVALID, "bad-tx-length");
+    }
+    // Block Size limit
+    const int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    if (block.vtx.size() > (nBlkSizeLimit / 128) || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
+        return state.DoS(100, error("CheckBlock() : size exceeds limit"), REJECT_INVALID, "bad-blk-length");
     }
     // Special case for Genesis block
     if (block.GetKryptoHash() == Params().HashGenesisBlock()) {
@@ -3441,7 +3453,7 @@ uint320 CPartialMerkleTree::ExtractMatches(std::vector<uint320> &vMatch) {
         return 0;
     }
     // check for excessively high numbers of transactions
-    if (nTransactions > MAX_BLOCK_SIZE / 60) { // 60 is the lower bound for the size of a serialized CTransaction
+    if (nTransactions > MAX_BLOCK_SIZE / 128) { // 128 is the lower bound for the size of a serialized CTransaction
         return 0;
     }
     // there can never be more hashes provided than one for every txid
@@ -4170,6 +4182,14 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
             pfrom->fDisconnect = true;
             return false;
+        }
+
+        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.5") != std::string::npos) {
+            if ((MainNet() && chainActive.Height() > nHEIGHT_125000) || (TestNet() && chainActive.Height() > 200)) {
+                LogPrintf("Client %s runs obsolete version 0.5.x, disconnecting\n", pfrom->addr.ToString());
+                pfrom->fDisconnect = true;
+                return false;
+            }
         }
 
         if (!vRecv.empty()) {

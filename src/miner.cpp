@@ -93,14 +93,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         return NULL;
     CBlock *pblock = &pblocktemplate->block; // pointer for convenience
 
-#if 0 // No longer needed after block 50,000 because, CBlockHeader::CURRENT_VERSION is now set to 2
-    // Switch to block version 2 at height 50,000 in MainNet
-    if ((MainNet() && (chainActive.Tip()->nHeight + 1) >= nHEIGHT_50000) ||
-        (TestNet() && (chainActive.Tip()->nHeight + 1) >= 25) ) {
-        pblock->nVersion = 2;
-    }
-#endif
-
     // Create coinbase tx
     CTransaction txNew;
     txNew.vin.resize(1);
@@ -117,8 +109,17 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
     // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
-    // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity:
-    nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
+
+    // Allow the creation of blocks larger than 1Mb only after height 250,000 in MainNet
+    if ((MainNet() && (chainActive.Tip()->nHeight + 1) < nHEIGHT_250000) || (TestNet() && (chainActive.Tip()->nHeight + 1) < 250)) {
+        // Before height 250,000, limit block size to between 1K and 999,000 bytes, regardless of MAX_BLOCK_SIZE.
+        nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(OLD_MAX_BLOCK_SIZE - 1000), nBlockMaxSize));
+    }
+    else 
+    {
+        // On height 250,000, increase the limit to betweeen 1K and MAX_BLOCK_SIZE - 1K:
+        nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(MAX_BLOCK_SIZE-1000), nBlockMaxSize));
+    }
 
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
@@ -221,6 +222,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         int64_t currTime = GetAdjustedTime() * 1000; // in Milliseconds
         int64_t minTxTime = currTime;
         int nBlockSigOps = 100;
+        const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
@@ -243,7 +245,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
             // Legacy limits on sigOps:
             unsigned int nTxSigOps = GetLegacySigOpCount(tx);
-            if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
+            if (nBlockSigOps + nTxSigOps >= nSigOpsLimit)
                 continue;
 
             // Skip free transactions if we're past the minimum block size:
@@ -266,7 +268,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
             int64_t nTxFees = view.GetValueIn(tx) - tx.GetValueOut();
 
             nTxSigOps += GetP2SHSigOpCount(tx, view);
-            if (nBlockSigOps + nTxSigOps >= MAX_BLOCK_SIGOPS)
+            if (nBlockSigOps + nTxSigOps >= nSigOpsLimit)
                 continue;
 
             CValidationState state;
