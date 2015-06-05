@@ -1118,8 +1118,8 @@ public:
         ::Serialize(s, txTo.nTxTime, nType, nVersion);
         // Serialize nLockTime
         ::Serialize(s, txTo.nLockTime, nType, nVersion);
-        // Serialize nHashCoin
-        ::Serialize(s, txTo.nHashCoin, nType, nVersion);
+        // Serialize nSideChain
+        ::Serialize(s, txTo.nSideChain, nType, nVersion);
     }
 };
 }

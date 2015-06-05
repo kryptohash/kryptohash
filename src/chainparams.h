@@ -63,13 +63,13 @@ public:
     const vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
     int GetRegionCode() const { return nRegion; }
-    int GetHashCoinCode() const { return nHashCoinCode; }
-    uint64_t GetHashCoinMask() const { return nHashCoinMask; }
+    int GetSideChainCode() const { return nSideChainCode; }
+    uint64_t GetSideChainMask() const { return nSideChainMask; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int64_t RandomSubsidyEnds() const { return nRandomSubsidyEnds; }
     int64_t RandomSubsidyBegins() const { return nRandomSubsidyBegins; }
     int MaxSubsidy() const { return nMaxSubsidy; }
-    int HashCoinSubsidy() const { return nHashCoinSubsidy; }
+    int SideChainSubsidy() const { return nSideChainSubsidy; }
     virtual const CBlock& GenesisBlock() const = 0;
     virtual bool RequireRPCPassword() const { return true; }
     const string& DataDir() const { return strDataDir; }
@@ -79,7 +79,7 @@ public:
     virtual const vector<CAddress>& FixedSeeds() const = 0;
     virtual bool UpdateParams(const int nRegionIn, const CGenesis dataIn) const = 0;
     int RPCPort() const { return nRPCPort; }
-    void SetHashCoinMask(uint64_t nHashCoinMaskIn) const { nHashCoinMask = nHashCoinMaskIn; }
+    void SetSideChainMask(uint64_t nSideChainMaskIn) const { nSideChainMask = nSideChainMaskIn; }
 
 protected:
     CChainParams() {}
@@ -108,7 +108,7 @@ protected:
     mutable int nDefaultPort;
     mutable int nRPCPort;
     mutable string strDataDir;
-    mutable uint64_t nHashCoinMask;
+    mutable uint64_t nSideChainMask;
     mutable uint320 hashGenesisBlock;
 
     uint320 genesisMerkleRoot;
@@ -121,8 +121,8 @@ protected:
     int64_t nRandomSubsidyBegins;
     int64_t nRandomSubsidyEnds;
     int nMaxSubsidy;
-    int nHashCoinCode;
-    int nHashCoinSubsidy;
+    int nSideChainCode;
+    int nSideChainSubsidy;
     vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
 };

@@ -31,8 +31,8 @@ public:
         pchMessageStart[3] = 0x9d;
         vGenesisAddr = ParseHex("020DC9A10284FDA30C3749C308390BE2B0E2DF56BE836D136D37679F63B258EC13");
         vAlertPubKey = ParseHex("027C8D760AFB55F6B999AFE2CC8F659D63BB5FBD118750FE369D485B2F4C74D8A2");
-        nHashCoinCode = 0; //Default to 0. Not implemented yet.
-        nHashCoinMask = 0; //Default to 0. Not implemented yet.
+        nSideChainCode = 0; //Default to 0. Not implemented yet.
+        nSideChainMask = 0; //Default to 0. Not implemented yet.
         nRegion = 0; //Default to Region 0
         SetRegionCode(nRegion);
 
@@ -155,7 +155,7 @@ public:
         nMaxSubsidy = 400;
         nRandomSubsidyBegins = 0;
         nRandomSubsidyEnds = 125000;
-        nHashCoinMask = 0;
+        nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.
@@ -205,7 +205,7 @@ public:
         nMaxSubsidy = 400;
         nRandomSubsidyBegins = 0;
         nRandomSubsidyEnds = 125000;
-        nHashCoinMask = 0;
+        nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 
         // Modify the Regression test genesis block so the timestamp is valid for a later start.

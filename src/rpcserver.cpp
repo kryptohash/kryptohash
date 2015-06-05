@@ -582,6 +582,19 @@ void StartRPCThreads()
             }
         }
 
+#if 0  // Disabling ECDH for now due to patent infrigement concerns regarding NSA Suite B Cryptography (http://en.wikipedia.org/wiki/ECC_patents)
+        const bool fUseECDH = GetBoolArg("-rpcsslecdh", false);
+        if (fUseECDH) {
+            EC_KEY *ecdh;
+            int curve = GetArg("-rpcsslcurve", NID_X9_62_prime256v1);
+            ecdh = EC_KEY_new_by_curve_name(curve);
+            if (ecdh) {
+                SSL_CTX_set_tmp_ecdh(rpc_ssl_context->impl(), ecdh);
+                EC_KEY_free(ecdh);
+            }
+        }
+#endif
+
         string strCiphers = GetArg("-rpcsslciphers", "TLSv1.2+HIGH:TLSv1+HIGH:!SSLv2:!EXP:!aNULL:!eNULL:!AH:!3DES:@STRENGTH");
         SSL_CTX_set_cipher_list(rpc_ssl_context->impl(), strCiphers.c_str());
     }

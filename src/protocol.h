@@ -23,7 +23,7 @@
  * (4) message start.
  * (4) header version
  * (4) region
- * (8) #coin
+ * (8) sidechain
  *(12) command.
  * (4) size.
  * (4) checksum.
@@ -32,10 +32,10 @@ class CMessageHeader
 {
     public:
         static const int CURRENT_VERSION = 1;
-        static const uint64_t CURRENT_HASHCOIN = 0;
+        static const uint64_t CURRENT_SIDECHAIN = 0;
         CMessageHeader();
         CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn);
-        CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nHashCoinMaskIn);
+        CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nSideChainMaskIn);
 
         std::string GetCommand() const;
         bool IsValid() const;
@@ -46,7 +46,7 @@ class CMessageHeader
              READWRITE(FLATDATA(pchMessageStart));
              READWRITE(nVersion);
              READWRITE(nRegion);
-             READWRITE(nHashCoin);
+             READWRITE(nSideChain);
              READWRITE(FLATDATA(pchCommand));
              READWRITE(nMessageSize);
              READWRITE(nChecksum);
@@ -57,19 +57,19 @@ class CMessageHeader
         enum {
             VERSION_SIZE      = sizeof(int),
             REGION_SIZE       = sizeof(int),
-            HASHCOIN_SIZE     = sizeof(uint64_t),
+            SIDECHAIN_SIZE    = sizeof(uint64_t),
             COMMAND_SIZE      = 12,
             MESSAGE_SIZE_SIZE = sizeof(int),
             CHECKSUM_SIZE     = sizeof(int),
 
-            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + REGION_SIZE + HASHCOIN_SIZE,
+            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + REGION_SIZE + SIDECHAIN_SIZE,
             CHECKSUM_OFFSET = MESSAGE_SIZE_OFFSET + MESSAGE_SIZE_SIZE,
-            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + REGION_SIZE + HASHCOIN_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
+            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + REGION_SIZE + SIDECHAIN_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
         };
         char pchMessageStart[MESSAGE_START_SIZE];
         int nVersion;
         int nRegion;
-        uint64_t nHashCoin;
+        uint64_t nSideChain;
         char pchCommand[COMMAND_SIZE];
         unsigned int nMessageSize;
         unsigned int nChecksum;

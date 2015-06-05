@@ -220,7 +220,7 @@ public:
     std::vector<CTxOut> vout;
     int64_t nTxTime;
     int64_t nLockTime;
-    uint64_t nHashCoin;
+    uint64_t nSideChain;
 
     // Denial-of-service detection:
     mutable int nDoS;
@@ -238,7 +238,7 @@ public:
         READWRITE(vout);
         READWRITE(nTxTime);
         READWRITE(nLockTime);
-        READWRITE(nHashCoin);
+        READWRITE(nSideChain);
     )
 
     void SetNull()
@@ -248,7 +248,7 @@ public:
         vout.clear();
         nTxTime = 0;
         nLockTime = 0;
-        nHashCoin = 0;
+        nSideChain = 0;
         nDoS = 0;  // Denial-of-service prevention
     }
 
@@ -302,7 +302,7 @@ public:
                 a.vout        == b.vout &&
                 a.nTxTime     == b.nTxTime &&
                 a.nLockTime   == b.nLockTime &&
-                a.nHashCoin   == b.nHashCoin );
+                a.nSideChain  == b.nSideChain );
     }
 
     friend bool operator!=(const CTransaction& a, const CTransaction& b)
@@ -435,7 +435,7 @@ public:
     uint320  hashPrevBlock;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
-    uint64_t nHashCoin;
+    uint64_t nSideChain;
     uint32_t sigchecksum;
     uint32_t nBits;
     uint32_t nTime;
@@ -454,7 +454,7 @@ public:
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nTxTime);
-        READWRITE(nHashCoin);
+        READWRITE(nSideChain);
         READWRITE(sigchecksum);
         READWRITE(nBits);
         READWRITE(nTime);
@@ -468,7 +468,7 @@ public:
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
         nTxTime = 0;
-        nHashCoin = 0;
+        nSideChain = 0;
         sigchecksum = 0;
         nBits = 0;
         nTime = 0;
@@ -567,7 +567,7 @@ public:
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
-        block.nHashCoin      = nHashCoin;
+        block.nSideChain     = nSideChain;
         block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
         block.nTime          = nTime;

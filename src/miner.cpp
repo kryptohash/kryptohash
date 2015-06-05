@@ -100,7 +100,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     txNew.vout.resize(1);
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
     txNew.nTxTime = GetTimeMillis();
-    txNew.nHashCoin = 0; // Always zero
+    txNew.nSideChain = 0; // Always zero. Future enhancement
 
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
@@ -386,7 +386,7 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
             uint320  hashPrevBlock;  // 40 bytes
             uint320  hashMerkleRoot; // 40 bytes
             int64_t  nTxTime;        //  8 bytes
-            uint64_t nHashCoin;      //  8 bytes
+            uint64_t nSideChain;     //  8 bytes
             uint32_t sigchecksum;    //  4 bytes
             uint32_t nBits;          //  4 bytes
             uint32_t nTime;          //  4 bytes
@@ -403,7 +403,7 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     tmp.block.hashPrevBlock   = pblock->hashPrevBlock;
     tmp.block.hashMerkleRoot  = pblock->hashMerkleRoot;
     tmp.block.nTxTime         = pblock->nTxTime;
-    tmp.block.nHashCoin       = pblock->nHashCoin;
+    tmp.block.nSideChain      = pblock->nSideChain;
     tmp.block.sigchecksum     = pblock->sigchecksum;
     tmp.block.nBits           = pblock->nBits;
     tmp.block.nTime           = pblock->nTime;

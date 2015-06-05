@@ -904,10 +904,10 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     if (!IsInitialBlockDownload() && (tx.nTxTime < nCurrTime - 14 * 24 * 60 * 60 * 1000)) {
         return state.DoS(100, error("AcceptToMemoryPool: : tx timestamp too old"), REJECT_INVALID, "timestamp");
     }
-    // Reject non-zero #Coin for now. Future enhancement.
-    if (tx.nHashCoin) // && (hdr.nHashCoin & Params().GetHashCoinMask()) == 0)
+    // Reject non-zero Side Chain Numbers for now. Future enhancement.
+    if (tx.nSideChain) // && (hdr.nSideChain & Params().GetSideChainMask()) == 0)
     {
-        return state.DoS(100, error("AcceptToMemoryPool: : incorrect #coin"), REJECT_INVALID, "#coin");
+        return state.DoS(100, error("AcceptToMemoryPool: : incorrect side chain number"), REJECT_INVALID, "sidechain");
     }
     // Rather not work on nonstandard transactions (unless -testnet/-regtest)
     string reason;
@@ -4904,8 +4904,8 @@ bool ProcessMessages(CNode* pfrom)
             fOk = false;
             break;
         }
-        // Ignore commands with any #Coin for now. Future enhancement.
-        if (hdr.nHashCoin) // && (hdr.nHashCoin & Params().GetHashCoinMask()) == 0)
+        // Ignore commands with any non-zero Side Chain number for now. Future enhancement.
+        if (hdr.nSideChain) // && (hdr.nSideChain & Params().GetSideChainMask()) == 0)
         {
             continue;
         }

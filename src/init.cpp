@@ -568,11 +568,11 @@ bool AppInit2(boost::thread_group& threadGroup)
         }
     }
     
-    if (mapArgs.count("-hashcoinmask"))
+    if (mapArgs.count("-sidechainmask"))
     {
-        uint64_t nHashCoinMask = GetArg("-hashcoinmask", 0);
-        if (nHashCoinMask != 0)
-            Params().SetHashCoinMask(nHashCoinMask);
+        uint64_t nSideChainMask = GetArg("-sidechainmask", 0);
+        if (nSideChainMask != 0)
+            Params().SetSideChainMask(nSideChainMask);
     }
 
     // Continue to put "/P2SH/" in the coinbase to monitor

@@ -35,7 +35,7 @@ class CBloomFilter;
 class CInv;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_BLOCK_SIZE = 10000000;
+static const unsigned int MAX_BLOCK_SIZE = 10*1024*1024;
 /** The old maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int OLD_MAX_BLOCK_SIZE = 1000000;
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
@@ -738,7 +738,7 @@ public:
     int nRegion;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
-    uint64_t nHashCoin;
+    uint64_t nSideChain;
     uint32_t sigchecksum;
     uint32_t nBits;
     uint32_t nTime;
@@ -765,7 +765,7 @@ public:
         nRegion         = 0;
         hashMerkleRoot  = 0;
         nTxTime         = 0;
-        nHashCoin       = 0;
+        nSideChain      = 0;
         sigchecksum     = 0;
         nBits           = 0;
         nTime           = 0;
@@ -790,7 +790,7 @@ public:
         nRegion         = block.nRegion;
         hashMerkleRoot  = block.hashMerkleRoot;
         nTxTime         = block.nTxTime;
-        nHashCoin       = block.nHashCoin;
+        nSideChain      = block.nSideChain;
         sigchecksum     = block.sigchecksum;
         nBits           = block.nBits;
         nTime           = block.nTime;
@@ -824,7 +824,7 @@ public:
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
-        block.nHashCoin      = nHashCoin;
+        block.nSideChain     = nSideChain;
         block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
         block.nTime          = nTime;
@@ -956,7 +956,7 @@ public:
         READWRITE(hashPrev);
         READWRITE(hashMerkleRoot);
         READWRITE(nTxTime);
-        READWRITE(nHashCoin);
+        READWRITE(nSideChain);
         READWRITE(sigchecksum);
         READWRITE(nTime);
         READWRITE(nBits);
@@ -972,7 +972,7 @@ public:
         block.hashPrevBlock  = hashPrev;
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
-        block.nHashCoin      = nHashCoin;
+        block.nSideChain     = nSideChain;
         block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
         block.nTime          = nTime;

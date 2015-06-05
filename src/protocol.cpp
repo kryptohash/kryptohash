@@ -25,7 +25,7 @@ CMessageHeader::CMessageHeader()
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
     nRegion = Params().GetRegionCode();
-    nHashCoin = CMessageHeader::CURRENT_HASHCOIN;
+    nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
     memset(pchCommand, 0, sizeof(pchCommand));
     pchCommand[1] = 1;
     nMessageSize = -1;
@@ -37,18 +37,18 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
     nRegion = Params().GetRegionCode();
-    nHashCoin = CMessageHeader::CURRENT_HASHCOIN;
+    nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
     nMessageSize = nMessageSizeIn;
     nChecksum = 0;
 }
 
-CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nHashCoinIn)
+CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nSideChainIn)
 {
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
     nRegion = Params().GetRegionCode();
-    nHashCoin = nHashCoinIn;
+    nSideChain = nSideChainIn;
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
     nMessageSize = nMessageSizeIn;
     nChecksum = 0;
