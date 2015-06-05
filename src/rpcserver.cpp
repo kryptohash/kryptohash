@@ -549,19 +549,40 @@ void StartRPCThreads()
 
     if (fUseSSL)
     {
-        rpc_ssl_context->set_options(ssl::context::no_sslv2);
-
         filesystem::path pathCertFile(GetArg("-rpcsslcertificatechainfile", "server.cert"));
-        if (!pathCertFile.is_complete()) pathCertFile = filesystem::path(GetDataDir()) / pathCertFile;
-        if (filesystem::exists(pathCertFile)) rpc_ssl_context->use_certificate_chain_file(pathCertFile.string());
-        else LogPrintf("ThreadRPCServer ERROR: missing server certificate file %s\n", pathCertFile.string());
+        if (!pathCertFile.is_complete())
+            pathCertFile = filesystem::path(GetDataDir()) / pathCertFile;
+        if (filesystem::exists(pathCertFile))
+            rpc_ssl_context->use_certificate_chain_file(pathCertFile.string());
+        else
+            LogPrintf("ThreadRPCServer ERROR: missing server certificate file %s\n", pathCertFile.string());
 
         filesystem::path pathPKFile(GetArg("-rpcsslprivatekeyfile", "server.pem"));
-        if (!pathPKFile.is_complete()) pathPKFile = filesystem::path(GetDataDir()) / pathPKFile;
-        if (filesystem::exists(pathPKFile)) rpc_ssl_context->use_private_key_file(pathPKFile.string(), ssl::context::pem);
-        else LogPrintf("ThreadRPCServer ERROR: missing server private key file %s\n", pathPKFile.string());
+        if (!pathPKFile.is_complete())
+            pathPKFile = filesystem::path(GetDataDir()) / pathPKFile;
+        if (filesystem::exists(pathPKFile))
+            rpc_ssl_context->use_private_key_file(pathPKFile.string(), ssl::context::pem);
+        else
+            LogPrintf("ThreadRPCServer ERROR: missing server private key file %s\n", pathPKFile.string());
 
-        string strCiphers = GetArg("-rpcsslciphers", "TLSv1.2+HIGH:TLSv1+HIGH:!SSLv2:!aNULL:!eNULL:!3DES:@STRENGTH");
+        const bool fUseEDH = GetBoolArg("-rpcssledh", false);
+        if (!fUseEDH) {
+            rpc_ssl_context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3);
+        }
+        else {
+            filesystem::path pathDHFile(GetArg("-rpcssldhparamfile", "dh2048.pem"));
+            if (!pathDHFile.is_complete())
+                pathDHFile = filesystem::path(GetDataDir()) / pathDHFile;
+            if (filesystem::exists(pathDHFile)) {
+                rpc_ssl_context->use_tmp_dh_file(pathDHFile.string());
+                rpc_ssl_context->set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3 | ssl::context::single_dh_use);
+            }
+            else {
+                LogPrintf("ThreadRPCServer ERROR: missing dh param file %s\n", pathDHFile.string());
+            }
+        }
+
+        string strCiphers = GetArg("-rpcsslciphers", "TLSv1.2+HIGH:TLSv1+HIGH:!SSLv2:!EXP:!aNULL:!eNULL:!AH:!3DES:@STRENGTH");
         SSL_CTX_set_cipher_list(rpc_ssl_context->impl(), strCiphers.c_str());
     }
 
