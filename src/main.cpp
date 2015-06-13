@@ -792,7 +792,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
         return state.DoS(10, error("CheckTransaction() : vout empty"), REJECT_INVALID, "bad-txns-vout-empty");
     }
     // Size limits
-    const int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    const unsigned int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
         return state.DoS(100, error("CheckTransaction() : size limits failed"), REJECT_INVALID, "bad-txns-oversize");
     }
@@ -2442,7 +2442,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     int64_t nFees = 0;
     int nInputs = 0;
     unsigned int nSigOps = 0;
-    const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+    const unsigned int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
     CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
     std::vector<std::pair<uint320, CDiskTxPos> > vPos;
     vPos.reserve(block.vtx.size());
@@ -3009,7 +3009,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("CheckBlock() : block has no Tx"), REJECT_INVALID, "bad-tx-length");
     }
     // Block Size limit
-    const int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    const unsigned int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
     if (block.vtx.size() > (nBlkSizeLimit / 128) || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
         return state.DoS(100, error("CheckBlock() : size exceeds limit"), REJECT_INVALID, "bad-blk-length");
     }
@@ -3064,7 +3064,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     BOOST_FOREACH(const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+    const unsigned int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
     if (nSigOps > nSigOpsLimit) {
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"), REJECT_INVALID, "bad-blk-sigops", true);
     }

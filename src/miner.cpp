@@ -110,7 +110,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     // Largest block you're willing to create:
     unsigned int nBlockMaxSize = GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
     // Limit to betweeen 1K and MAX_BLOCK_SIZE-1K for sanity. After height 150,000 we allow miners to create larger blocks.
-    const int nBlkSizeLimit = (MainNet() && (chainActive.Tip()->nHeight + 1) > nHEIGHT_150000) ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    const unsigned int nBlkSizeLimit = (MainNet() && (chainActive.Tip()->nHeight + 1) > nHEIGHT_150000) ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(nBlkSizeLimit - 1000), nBlockMaxSize));
 
     // How much of the block should be dedicated to high-priority transactions,
@@ -214,7 +214,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         int64_t currTime = GetAdjustedTime() * 1000; // in Milliseconds
         int64_t minTxTime = currTime;
         int nBlockSigOps = 100;
-        const int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+        const unsigned int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
         bool fSortedByFee = (nBlockPrioritySize <= 0);
 
         TxPriorityCompare comparer(fSortedByFee);
