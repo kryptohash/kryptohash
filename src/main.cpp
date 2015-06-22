@@ -3141,8 +3141,8 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (pcheckpoint && nHeight < pcheckpoint->nHeight) {
             return state.DoS(100, error("AcceptBlock() : forked chain older than last checkpoint (height %d)", nHeight));
         }
-        // Kryptohash block versions began with 1 but, this version is now obsolete.
-        if (block.GetBlockVersion() <= 1) {
+        // Kryptohash block versions began with 1.
+        if (block.GetBlockVersion() < 1) {
             return state.Invalid(error("AcceptBlock() : rejected incorrect nVersion block"), REJECT_OBSOLETE, "bad-version");
         }
         // Reject version=2 blocks after height 150,000 and only when 90% of the network has upgraded:
