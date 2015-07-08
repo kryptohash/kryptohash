@@ -85,6 +85,7 @@ const float PIDintegral     = 0.050f;
 const float PIDderivative   = 0.100f;
 
 CPID PIDctrl;
+map<int64_t, CPID> mapPID;
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1732,17 +1733,15 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 
     assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage));
 
-    const CBlockIndex* pindex = pindexLast; // Pointer for convinience
-    assert(pindex);  // It should never happen.
-
     // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
-    int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
+    int64_t nAverage = GetMeanTime(pindexLast, nAveragingCnt, filterOutliers, preventZeroAverage);
 
     nAverage /= 1000;  // In seconds.
 
     // Retarget
     float nDeltaDiff = 0;
     unsigned int nbits = 0;
+    bool fPIDtoMap = false;
 
     // Check if checkpoint is being used.
     if (usePIDcheckpoint) {
@@ -1751,7 +1750,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            nbits = myPID.GetDiff();
 	        }
 	        else if (myPID.GetDelta()) {
-	            nbits = CalcRetarget2(pindex->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
+                nbits = CalcRetarget2(pindexLast->nBits, myPID.GetDelta(), DeltaMulInc, DeltaMulDec);
 	        }
         }
         else if (pindexLast->nHeight == myPID.GetHeight() + nRetargetInterval) {
@@ -1773,7 +1772,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            PIDctrl.SetDelta(nDeltaDiff);
 	            PIDctrl.SetHeight(pindexLast->nHeight);
             }
-            nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
+            nbits = CalcRetarget2(pindexLast->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
         }
     }
     else {
@@ -1789,7 +1788,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             nDeltaDiff = PIDctrl.GetDelta();
         }
         else {
-            if (fFeedPID) {
+            if (!fFeedPID) {
+                // Calculate the next Diff using a copy of PIDctrl.
+                myPID = PIDctrl;
+                nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+            }
+            else if (pindexLast->nHeight > PIDctrl.GetHeight()) {
 	            // Feed the PID controller with the average nTime (in seconds).
 	            // PID will return how much the delta diff needs to be in order to
 	            // reach the setpoint.
@@ -1797,13 +1801,22 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            // Store the calculated Difficulty and block Height 
 	            PIDctrl.SetDelta(nDeltaDiff);
 	            PIDctrl.SetHeight(pindexLast->nHeight);
+                fPIDtoMap = true;
 	        }
             else {
-                myPID = PIDctrl;
+                // Get got a block out of order.
+                
+                // Is the height in the PID map?
+                map<int64_t, CPID>::iterator mi = mapPID.find(pindexLast->nHeight);
+                if (mi == mapPID.end()) {
+                    LogPrintf("GetNextWorkRequiredPID: bad Height %u. Returning diff=%08x\n", pindexLast->nHeight, pindexLast->nBits);
+                    return pindexLast->nBits;
+                }
+                myPID = (*mi).second;
                 nDeltaDiff = myPID.PIDCalculate(float(nAverage));
             }
         }
-        nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
+        nbits = CalcRetarget2(pindexLast->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
     }
 
     CBigNum bnNew;
@@ -1814,6 +1827,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 
     if (!usePIDcheckpoint) {
         PIDctrl.SetDiff(bnNew.GetCompact());
+    }
+
+    if (fPIDtoMap) {
+        mapPID.insert(make_pair(pindexLast->nHeight, PIDctrl));
     }
 
     /// debug print
@@ -1837,6 +1854,8 @@ void InitPIDstate(void)
     uint32_t nRand = 0;
     int64_t  nLastPIDCheckpoint;
     int64_t  nChainHeight;
+
+    mapPID.clear();
 
     if (chainActive.Genesis() == NULL) {
         // Init PID with default parameters.
@@ -1926,6 +1945,8 @@ void InitPIDstate(void)
             bnNew = Params().ProofOfWorkLimit();
         }
         PIDctrl.SetDiff(bnNew.GetCompact());
+
+        mapPID.insert(make_pair(nHeight, PIDctrl));
 
         nHeight += (nRetargetInterval + nRand);
     }
@@ -3095,15 +3116,6 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight + 1;
 
-        // Check proof of work
-#if 0
-        if (block.nBits != GetNextWorkRequired(pindexPrev, &block))
-#else
-        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
-#endif
-        {
-            return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
-        }
         // Check timestamp against prev
         if (nHeight > nHEIGHT_5800 && block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
@@ -3163,6 +3175,11 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             if (block.vtx[0].vin[0].scriptSig.size() < expect.size() || !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
                 return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
             }
+        }
+        // Check proof of work
+        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
+        {
+            return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
         }
     }
 
