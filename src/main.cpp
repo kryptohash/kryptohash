@@ -1789,7 +1789,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             nDeltaDiff = PIDctrl.GetDelta();
         }
         else {
-            if (fFeedPID) {
+            if (fFeedPID && pindexLast->nHeight > PIDctrl.GetHeight()) {
 	            // Feed the PID controller with the average nTime (in seconds).
 	            // PID will return how much the delta diff needs to be in order to
 	            // reach the setpoint.
@@ -1798,9 +1798,13 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            PIDctrl.SetDelta(nDeltaDiff);
 	            PIDctrl.SetHeight(pindexLast->nHeight);
 	        }
-            else {
+            else if (!fFeedPID) {
                 myPID = PIDctrl;
                 nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+            }
+            else {
+                LogPrintf("GetNextWorkRequiredPID got Height %u. Returning diff=%08x\n", pindexLast->nHeight + 1, pindexLast->nBits);
+                return pindexLast->nBits;
             }
         }
         nbits = CalcRetarget2(pindex->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
@@ -3095,15 +3099,6 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight + 1;
 
-        // Check proof of work
-#if 0
-        if (block.nBits != GetNextWorkRequired(pindexPrev, &block))
-#else
-        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
-#endif
-        {
-            return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
-        }
         // Check timestamp against prev
         if (nHeight > nHEIGHT_5800 && block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
             return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
@@ -3163,6 +3158,11 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             if (block.vtx[0].vin[0].scriptSig.size() < expect.size() || !std::equal(expect.begin(), expect.end(), block.vtx[0].vin[0].scriptSig.begin())) {
                 return state.DoS(100, error("AcceptBlock() : block height mismatch in coinbase"), REJECT_INVALID, "bad-cb-height");
             }
+        }
+        // Check proof of work
+        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
+        {
+            return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
         }
     }
 
