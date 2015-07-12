@@ -1673,7 +1673,7 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         return Params().ProofOfWorkLimit().GetCompact();
     }
 
-    // MainNet: Re-target once every 100 - 120 blocks. (100 plus a random value calculated during the previous retarget)
+    // MainNet: Re-target once every 100 blocks.
     // TestNet/RegNet: Re-target once every 10 blocks.
     uint32_t nRetargetInterval;
     if (MainNet()) {
@@ -1698,31 +1698,9 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
         }
     }
 
-
     if ((pindexLast->nHeight + 1) % (nRetargetInterval + rand) != 0) {
         return pindexLast->nBits;
     }
-
-#if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
-    if (MainNet()) {
-        // Calculate new random value for the next re-target
-        int rc;
-        uint32_t rand = 0;
-        int64_t prevHeight = pindexLast->nHeight;
-        PRNG_STRUCT rndStruct;
-        keccakprng_init(&rndStruct);
-        keccakprng_seed(&rndStruct, pindexLast->GetBlockHash().begin(), pindexLast->GetBlockHash().size());
-        rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
-        if (!rc) {
-            rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
-            if (!rc) {
-                rand %= 21;
-            }
-        }
-        // Save random number in the PID class
-        PIDctrl.SetRand(rand);
-    }
-#endif
 
     // Use block height to manually hack some of the parameters.
     bool filterOutliers = false;
@@ -1805,11 +1783,11 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	        }
             else {
                 // Get got a block out of order.
-                
+                LogPrintf("GetNextWorkRequiredPID: Got block out of order. Height %u\n", pindexLast->nHeight);
                 // Is the height in the PID map?
                 map<int64_t, CPID>::iterator mi = mapPID.find(pindexLast->nHeight);
                 if (mi == mapPID.end()) {
-                    LogPrintf("GetNextWorkRequiredPID: bad Height %u. Returning diff=%08x\n", pindexLast->nHeight, pindexLast->nBits);
+                    LogPrintf("GetNextWorkRequiredPID: Returning diff=%08x\n", pindexLast->nBits);
                     return pindexLast->nBits;
                 }
                 myPID = (*mi).second;
@@ -1900,23 +1878,7 @@ void InitPIDstate(void)
         if (pindex == NULL) {
             break;
         }
-#if 0 // Disabling random value for next re-target.  We'll re-target every 100 blocks.
-        // Calculate the height of the next re-target
-        if (MainNet()) {
-            int rc;
-            int64_t prevHeight = pindex->nHeight;
-            PRNG_STRUCT rndStruct;
-            keccakprng_init(&rndStruct);
-            keccakprng_seed(&rndStruct, pindex->GetBlockHash().begin(), pindex->GetBlockHash().size());
-            rc = keccakprng_seed(&rndStruct, (unsigned char *)&prevHeight, sizeof(int64_t));
-            if (!rc) {
-                rc = keccakprng_bytes(&rndStruct, (unsigned char*)&nRand, sizeof(nRand));
-                if (!rc) {
-                    nRand %= 21;
-                }
-            }
-        }
-#endif
+
         bool filterOutliers = false;
         bool preventZeroAverage = false;
         unsigned int DeltaMulInc = 1;
@@ -3157,7 +3119,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (block.GetBlockVersion() < 1) {
             return state.Invalid(error("AcceptBlock() : rejected incorrect nVersion block"), REJECT_OBSOLETE, "bad-version");
         }
-        // Reject version=2 blocks after height 150,000 and only when 90% of the network has upgraded:
+        // Reject version=2 blocks after height 125,000 and only when 90% of the network has upgraded:
         if (block.GetBlockVersion() < 3) {
             if (MainNet() && nHeight > nHEIGHT_125000) {
                 if (fNewBlockSizeLimit || CBlockIndex::IsSuperMajority(2, pindexPrev, 900, 1000)) {
@@ -3165,7 +3127,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
                 }
             }
             else if (TestNet() && nHeight > 250) {
-                return state.Invalid(error("AcceptBlock() : rejected nVersion=1 block"), REJECT_OBSOLETE, "bad-version");
+                return state.Invalid(error("AcceptBlock() : rejected nVersion=2 block"), REJECT_OBSOLETE, "bad-version");
             }
         }
         // Enforce rule that the coinbase starts with serialized block height
@@ -3886,7 +3848,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
                     continue;
                 // read size
                 blkdat >> nSize;
-                if (nSize < 80 || nSize > MAX_BLOCK_SIZE)
+                if (nSize < 120 || nSize > MAX_BLOCK_SIZE)
                     continue;
             } catch (std::exception &e) {
                 // no valid block header found; don't complain
