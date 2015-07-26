@@ -86,7 +86,7 @@
       <WarningLevel>Level1</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__PRETTY_FUNCTION__=__FUNCTION__;__func__=__FUNCTION__;HAVE_CONFIG_H;WIN32;_DEBUG;USE_UPNP;UNICODE;_SCL_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\src;..\..\src\keccak;..\..\src\leveldb\include;..\..\src\leveldb\helpers\memenv;..\..\..\KryptohashDeps\boost_1_57_0;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows;..\..\..\KryptohashDeps\openssl-1.0.1o\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src;..\..\src\keccak;..\..\src\leveldb\include;..\..\src\leveldb\helpers\memenv;..\..\..\KryptohashDeps\boost_1_58_0;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows;..\..\..\KryptohashDeps\openssl-1.0.1p\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\KryptohashDeps\openssl-1.0.1o\out32.dbg;..\..\..\KryptohashDeps\boost_1_57_0\stage\lib\x86;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows\Win32\Static Debug;..\..\..\KryptohashDeps\miniupnpc\msvc\Debug;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\KryptohashDeps\openssl-1.0.1p\out32.dbg;..\..\..\KryptohashDeps\boost_1_58_0\stage\lib\x86;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows\Win32\Static Debug;..\..\..\KryptohashDeps\miniupnpc\msvc\Debug;</AdditionalLibraryDirectories>
       <AdditionalDependencies>libeay32.lib;ssleay32.lib;libdb53sd.lib;miniupnpc.lib;iphlpapi.lib;shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -106,7 +106,7 @@
       <WarningLevel>Level1</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;__PRETTY_FUNCTION__=__FUNCTION__;__func__=__FUNCTION__;HAVE_CONFIG_H;WIN32;_DEBUG;USE_UPNP;UNICODE;_SCL_SECURE_NO_WARNINGS;_WIN32_WINNT=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\src;..\..\src\keccak;..\..\src\leveldb\include;..\..\src\leveldb\helpers\memenv;..\..\..\KryptohashDeps\boost_1_57_0;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows;..\..\..\KryptohashDeps\openssl-1.0.1o\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src;..\..\src\keccak;..\..\src\leveldb\include;..\..\src\leveldb\helpers\memenv;..\..\..\KryptohashDeps\boost_1_58_0;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows;..\..\..\KryptohashDeps\openssl-1.0.1p\inc32;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -115,7 +115,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\KryptohashDeps\openssl-1.0.1o\out64.dbg;..\..\..\KryptohashDeps\boost_1_57_0\stage\lib\x64;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows\x64\Static Debug;..\..\..\KryptohashDeps\miniupnpc\msvc\x64\Debug;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\KryptohashDeps\openssl-1.0.1p\out64.dbg;..\..\..\KryptohashDeps\boost_1_58_0\stage\lib\x64;..\..\..\KryptohashDeps\db-5.3.28.NC\build_windows\x64\Static Debug;..\..\..\KryptohashDeps\miniupnpc\msvc\x64\Debug;</AdditionalLibraryDirectories>
       <AdditionalDependencies>libeay32.lib;ssleay32.lib;libdb53sd.lib;miniupnpc.lib;iphlpapi.lib;shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

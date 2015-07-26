@@ -78,7 +78,7 @@
       <WarningLevel>Level1</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\KryptohashDeps\openssl-1.0.1o\inc32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\KryptohashDeps\openssl-1.0.1p\inc32</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
@@ -96,7 +96,7 @@
       <WarningLevel>Level1</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\KryptohashDeps\openssl-1.0.1o\inc32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\KryptohashDeps\openssl-1.0.1p\inc32</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
