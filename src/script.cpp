@@ -277,7 +277,7 @@ bool IsCanonicalSignature(const valtype &vchSig, unsigned int flags) {
 #ifdef USE_ED25519
     if (vchSig[1] != 64 || vchSig[2] != 32 || vchSig[3] != 4)
         return error("Non-canonical signature: wrong header");
-    if (vchSig[1] + vchSig[2] + vchSig[3] != (vchSig.size() - 5))
+    if ((unsigned int)vchSig[1] + (unsigned int)vchSig[2] + (unsigned int)vchSig[3] != (unsigned int)(vchSig.size() - 5))
         return error("Non-canonical signature: wrong length");
 #else
     if (vchSig[1] != vchSig.size() - 3)
