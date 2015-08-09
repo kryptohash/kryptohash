@@ -1251,6 +1251,31 @@ public:
 
         return Result;
     }
+
+	float PIDCalculateDouble(float NextPoint) {
+		float propError;
+		float derivError;
+		double Result;
+
+		propError = SetPoint - NextPoint;
+		if ((SumError + propError) > 256.0f) {
+			SumError = 256.0f;
+		}
+		else if ((SumError + propError) < -256.0f) {
+			SumError = -256.0f;
+		}
+		else {
+			SumError += propError;
+		}
+
+		derivError = LastError - PrevError;
+		PrevError = LastError;
+		LastError = propError;
+
+		Result = double(Proportional * propError) + double(Integral * SumError) + double(Derivative * derivError);
+
+		return (float)Result;
+	}
 };
 
 class CPID : public CPIDcontroller

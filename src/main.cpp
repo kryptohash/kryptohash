@@ -1555,9 +1555,9 @@ unsigned int CalcRetarget2(const unsigned int nBits, const float delta, unsigned
 }
 
 bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetIntervalIn, unsigned int *DeltaMulInc, unsigned int *DeltaMulDec,
-    uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage)
+	uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage, bool *usePIDcalcDouble)
 {
-    if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL) {
+	if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL || usePIDcalcDouble == NULL) {
         return false;
     }
 
@@ -1579,12 +1579,19 @@ bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetInterv
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
     }
-    else if (currHeight >= nHEIGHT_6000) {
+	else if (currHeight >= nHEIGHT_6000 && currHeight < nHEIGHT_125000) {
         *DeltaMulInc = 2;
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
         *preventZeroAverage = true;
     }
+	else if (currHeight >= nHEIGHT_125000) {
+		*DeltaMulInc = 2;
+		*nAveragingCnt = nRetargetIntervalIn - 5;
+		*filterOutliers = true;
+		*preventZeroAverage = true;
+		*usePIDcalcDouble = true; // Use alternative PIDCalculateDouble method.
+	}
 
     return true;
 }
@@ -1705,11 +1712,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     // Use block height to manually hack some of the parameters.
     bool filterOutliers = false;
     bool preventZeroAverage = false;
-    unsigned int DeltaMulInc = 1;
+	bool usePIDcalcDouble = false;
+	unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-    assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage));
+	assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcDouble));
 
     // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
     int64_t nAverage = GetMeanTime(pindexLast, nAveragingCnt, filterOutliers, preventZeroAverage);
@@ -1745,7 +1753,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                 nDeltaDiff = PIDctrl.GetDelta();
             }
             else {
-	            nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+				if (usePIDcalcDouble) {
+					nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+				}
+				else {
+					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+				}
 	            // Store the calculated Difficulty and block Height 
 	            PIDctrl.SetDelta(nDeltaDiff);
 	            PIDctrl.SetHeight(pindexLast->nHeight);
@@ -1769,13 +1782,23 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             if (!fFeedPID) {
                 // Calculate the next Diff using a copy of PIDctrl.
                 myPID = PIDctrl;
-                nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+				if (usePIDcalcDouble) {
+					nDeltaDiff = myPID.PIDCalculateDouble(float(nAverage));
+				}
+				else {
+					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+				}
             }
             else if (pindexLast->nHeight > PIDctrl.GetHeight()) {
 	            // Feed the PID controller with the average nTime (in seconds).
 	            // PID will return how much the delta diff needs to be in order to
 	            // reach the setpoint.
-                nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+				if (usePIDcalcDouble) {
+					nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+				}
+				else {
+					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+				}
 	            // Store the calculated Difficulty and block Height 
 	            PIDctrl.SetDelta(nDeltaDiff);
 	            PIDctrl.SetHeight(pindexLast->nHeight);
@@ -1791,7 +1814,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                     return pindexLast->nBits;
                 }
                 myPID = (*mi).second;
-                nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+				if (usePIDcalcDouble) {
+					nDeltaDiff = myPID.PIDCalculateDouble(float(nAverage));
+				}
+				else {
+					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+				}
             }
         }
         nbits = CalcRetarget2(pindexLast->nBits, nDeltaDiff, DeltaMulInc, DeltaMulDec);
@@ -1881,11 +1909,12 @@ void InitPIDstate(void)
 
         bool filterOutliers = false;
         bool preventZeroAverage = false;
+		bool usePIDcalcDouble = false;
         unsigned int DeltaMulInc = 1;
         unsigned int DeltaMulDec = 1;
         uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-        assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage));
+		assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcDouble));
 
         // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
         int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
@@ -1893,8 +1922,13 @@ void InitPIDstate(void)
         nAverage /= 1000;
 
         // Feed the PID controller with the average nTime (in seconds)
-        nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
-        // Store Rand, block height and the calculated difficulty
+		if (usePIDcalcDouble) {
+			nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+		}
+		else {
+			nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+		}
+		// Store Rand, block height and the calculated difficulty
         PIDctrl.SetRand(nRand);
         PIDctrl.SetHeight(nHeight);
         PIDctrl.SetDelta(nDeltaDiff);
@@ -3139,7 +3173,8 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             }
         }
         // Check proof of work
-        if (block.nBits != GetNextWorkRequiredPID(pindexPrev, &block, true))
+		uint32_t nRequiredDiff = GetNextWorkRequiredPID(pindexPrev, &block, true);
+		if (block.nBits != nRequiredDiff)
         {
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
         }
