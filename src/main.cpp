@@ -3113,7 +3113,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
-        if (nHeight > nHEIGHT_5800 && nHeight < nHEIGHT_200000)
+        if (nHeight > nHEIGHT_5800 && nHeight < nHEIGHT_200000) {
 			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
 				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
 			}
