@@ -29,6 +29,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <boost/math/special_functions/round.hpp>
 
 class CBlockIndex;
 class CBloomFilter;
@@ -98,6 +99,7 @@ static const int64_t nHEIGHT_49000 = 49000;
 static const int64_t nHEIGHT_50000 = 50000;
 static const int64_t nHEIGHT_125000 = 125000;
 static const int64_t nHEIGHT_150000 = 150000;
+static const int64_t nHEIGHT_200000 = 200000;
 static const int64_t nHEIGHT_250000 = 250000;
 
 
@@ -861,7 +863,10 @@ public:
         return CheckProofOfWork(GetBlockHash(), nBits);
     }
 
-    enum { nMedianTimeSpan=11 };
+    enum { 
+	    nMedianTimeSpan = 11,
+	    nMedianTimeSpan2 = 81 // median of ~2 hours in the past	
+	};
 
     int64_t GetMedianTimePast() const
     {
@@ -878,6 +883,21 @@ public:
         return pbegin[(pend - pbegin) / 2];
     }
 
+    int64_t GetMedianTimePast2() const
+    {
+        int64_t pmedian[nMedianTimeSpan2];
+        int64_t* pbegin = &pmedian[nMedianTimeSpan2];
+        int64_t* pend = &pmedian[nMedianTimeSpan2];
+
+        const CBlockIndex* pindex = this;
+        for (int i = 0; i < nMedianTimeSpan2 && pindex; i++, pindex = pindex->pprev)
+        {
+            *(--pbegin) = pindex->GetBlockTxTime();
+        }
+        std::sort(pbegin, pend);
+        return pbegin[(pend - pbegin) / 2];
+    }
+	
     int64_t GetMedianTxTimePast() const
     {
         const CBlockIndex* pindex = this;
@@ -1252,10 +1272,10 @@ public:
         return Result;
     }
 
-	float PIDCalculateDouble(float NextPoint) {
+	double PIDCalculateDouble(float NextPoint) {
 		float propError;
 		float derivError;
-		double Result;
+		double result;
 
 		propError = SetPoint - NextPoint;
 		if ((SumError + propError) > 256.0f) {
@@ -1272,9 +1292,16 @@ public:
 		PrevError = LastError;
 		LastError = propError;
 
-		Result = double(Proportional * propError) + double(Integral * SumError) + double(Derivative * derivError);
+		result = (double)Proportional * (double)propError + (double)Integral * (double)SumError + (double)Derivative * (double)derivError;
 
-		return (float)Result;
+		return result;
+	}
+	
+	float PIDCalculateRounded(float NextPoint) {
+		double value = PIDCalculateDouble(NextPoint);
+		double result = boost::math::round(value);
+
+		return (float)result;
 	}
 };
 

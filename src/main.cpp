@@ -1555,9 +1555,9 @@ unsigned int CalcRetarget2(const unsigned int nBits, const float delta, unsigned
 }
 
 bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetIntervalIn, unsigned int *DeltaMulInc, unsigned int *DeltaMulDec,
-	uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage, bool *usePIDcalcDouble)
+	uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage, bool *usePIDcalcRounded)
 {
-	if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL || usePIDcalcDouble == NULL) {
+	if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL || usePIDcalcRounded == NULL) {
         return false;
     }
 
@@ -1579,18 +1579,18 @@ bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetInterv
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
     }
-	else if (currHeight >= nHEIGHT_6000 && currHeight < nHEIGHT_125000) {
+	else if (currHeight >= nHEIGHT_6000 && currHeight < nHEIGHT_200000) {
         *DeltaMulInc = 2;
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
         *preventZeroAverage = true;
     }
-	else if (currHeight >= nHEIGHT_125000) {
+	else if (currHeight >= nHEIGHT_200000) {
 		*DeltaMulInc = 2;
 		*nAveragingCnt = nRetargetIntervalIn - 5;
 		*filterOutliers = true;
 		*preventZeroAverage = true;
-		*usePIDcalcDouble = true; // Use alternative PIDCalculateDouble method.
+		*usePIDcalcRounded = true; // Use alternative PIDCalculateRounded method.
 	}
 
     return true;
@@ -1712,12 +1712,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     // Use block height to manually hack some of the parameters.
     bool filterOutliers = false;
     bool preventZeroAverage = false;
-	bool usePIDcalcDouble = false;
+	bool usePIDcalcRounded = false;
 	unsigned int DeltaMulInc = 1;
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-	assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcDouble));
+	assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
 
     // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
     int64_t nAverage = GetMeanTime(pindexLast, nAveragingCnt, filterOutliers, preventZeroAverage);
@@ -1753,8 +1753,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                 nDeltaDiff = PIDctrl.GetDelta();
             }
             else {
-				if (usePIDcalcDouble) {
-					nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+				if (usePIDcalcRounded) {
+					nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
 				}
 				else {
 					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
@@ -1782,8 +1782,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             if (!fFeedPID) {
                 // Calculate the next Diff using a copy of PIDctrl.
                 myPID = PIDctrl;
-				if (usePIDcalcDouble) {
-					nDeltaDiff = myPID.PIDCalculateDouble(float(nAverage));
+				if (usePIDcalcRounded) {
+					nDeltaDiff = myPID.PIDCalculateRounded(float(nAverage));
 				}
 				else {
 					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
@@ -1793,8 +1793,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            // Feed the PID controller with the average nTime (in seconds).
 	            // PID will return how much the delta diff needs to be in order to
 	            // reach the setpoint.
-				if (usePIDcalcDouble) {
-					nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+				if (usePIDcalcRounded) {
+					nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
 				}
 				else {
 					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
@@ -1814,8 +1814,8 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                     return pindexLast->nBits;
                 }
                 myPID = (*mi).second;
-				if (usePIDcalcDouble) {
-					nDeltaDiff = myPID.PIDCalculateDouble(float(nAverage));
+				if (usePIDcalcRounded) {
+					nDeltaDiff = myPID.PIDCalculateRounded(float(nAverage));
 				}
 				else {
 					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
@@ -1909,12 +1909,12 @@ void InitPIDstate(void)
 
         bool filterOutliers = false;
         bool preventZeroAverage = false;
-		bool usePIDcalcDouble = false;
+		bool usePIDcalcRounded = false;
         unsigned int DeltaMulInc = 1;
         unsigned int DeltaMulDec = 1;
         uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-		assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcDouble));
+		assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
 
         // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
         int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
@@ -1922,8 +1922,8 @@ void InitPIDstate(void)
         nAverage /= 1000;
 
         // Feed the PID controller with the average nTime (in seconds)
-		if (usePIDcalcDouble) {
-			nDeltaDiff = PIDctrl.PIDCalculateDouble(float(nAverage));
+		if (usePIDcalcRounded) {
+			nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
 		}
 		else {
 			nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
@@ -3113,9 +3113,16 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
-        if (nHeight > nHEIGHT_5800 && block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
-            return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
+        if (nHeight > nHEIGHT_5800 && nHeight < nHEIGHT_200000)
+			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
+				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
+			}
         }
+        else if (nHeight >= nHEIGHT_200000) {
+			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast2()) {
+				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
+			}
+		}
 
 #if defined(KRYPTOHASH_DEV)
         // Additional timestamp checks
