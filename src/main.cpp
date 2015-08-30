@@ -1611,6 +1611,8 @@ bool GetHardCodedParamsTestNet(const int64_t currHeight, const uint32_t nRetarge
 		*preventZeroAverage = true;
 		*usePIDcalcRounded = true; // Use alternative PIDCalculateRounded method.
 	}
+
+    return true;
 }
 
 int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
