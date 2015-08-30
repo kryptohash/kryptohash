@@ -1596,6 +1596,23 @@ bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetInterv
     return true;
 }
 
+bool GetHardCodedParamsTestNet(const int64_t currHeight, const uint32_t nRetargetIntervalIn, unsigned int *DeltaMulInc, unsigned int *DeltaMulDec,
+	uint32_t *nAveragingCnt, bool *filterOutliers, bool *preventZeroAverage, bool *usePIDcalcRounded)
+{
+	if (DeltaMulInc == NULL || DeltaMulDec == NULL || nAveragingCnt == NULL || filterOutliers == NULL || preventZeroAverage == NULL || usePIDcalcRounded == NULL) {
+		return false;
+	}
+
+	// Use block height as input to manually hack some of the TestNet parameters.
+	if (currHeight >= 140) {
+		*DeltaMulInc = 2;
+		*nAveragingCnt = nRetargetIntervalIn - 5;
+		*filterOutliers = true;
+		*preventZeroAverage = true;
+		*usePIDcalcRounded = true; // Use alternative PIDCalculateRounded method.
+	}
+}
+
 int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
 {
     if (pindexLast == NULL) {
@@ -1717,7 +1734,12 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
     unsigned int DeltaMulDec = 1;
     uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-	assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
+	if (MainNet()) {
+		assert(GetHardCodedParams(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
+	}
+	else {
+		GetHardCodedParamsTestNet(pindexLast->nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded);
+	}
 
     // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
     int64_t nAverage = GetMeanTime(pindexLast, nAveragingCnt, filterOutliers, preventZeroAverage);
@@ -1914,7 +1936,12 @@ void InitPIDstate(void)
         unsigned int DeltaMulDec = 1;
         uint32_t nAveragingCnt = nRetargetInterval / 2;
 
-		assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
+		if (MainNet()) {
+			assert(GetHardCodedParams(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded));
+		}
+		else {
+			GetHardCodedParamsTestNet(nHeight + 1, nRetargetInterval, &DeltaMulInc, &DeltaMulDec, &nAveragingCnt, &filterOutliers, &preventZeroAverage, &usePIDcalcRounded);
+		}
 
         // Obtain the nTime average using the last 'nAveragingCnt' number of blocks.
         int64_t nAverage = GetMeanTime(pindex, nAveragingCnt, filterOutliers, preventZeroAverage);
