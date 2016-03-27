@@ -1579,13 +1579,13 @@ bool GetHardCodedParams(const int64_t currHeight, const uint32_t nRetargetInterv
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
     }
-	else if (currHeight >= nHEIGHT_6000 && currHeight < nHEIGHT_200000) {
+	else if (currHeight >= nHEIGHT_6000 && currHeight < nHEIGHT_160000) {
         *DeltaMulInc = 2;
         *nAveragingCnt = nRetargetIntervalIn - 5;
         *filterOutliers = true;
         *preventZeroAverage = true;
     }
-	else if (currHeight >= nHEIGHT_200000) {
+	else if (currHeight >= nHEIGHT_160000) {
 		*DeltaMulInc = 2;
 		*nAveragingCnt = nRetargetIntervalIn - 5;
 		*filterOutliers = true;
@@ -1612,7 +1612,7 @@ bool GetHardCodedParamsTestNet(const int64_t currHeight, const uint32_t nRetarge
 		*usePIDcalcRounded = true; // Use alternative PIDCalculateRounded method.
 	}
 
-    return true;
+	return true;
 }
 
 int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
@@ -1778,10 +1778,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
             }
             else {
 				if (usePIDcalcRounded) {
-					nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
+					nDeltaDiff = PIDctrl.PIDCalculateRounded((float)nAverage);
 				}
 				else {
-					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+					nDeltaDiff = PIDctrl.PIDCalculate((float)nAverage);
 				}
 	            // Store the calculated Difficulty and block Height 
 	            PIDctrl.SetDelta(nDeltaDiff);
@@ -1807,10 +1807,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                 // Calculate the next Diff using a copy of PIDctrl.
                 myPID = PIDctrl;
 				if (usePIDcalcRounded) {
-					nDeltaDiff = myPID.PIDCalculateRounded(float(nAverage));
+					nDeltaDiff = myPID.PIDCalculateRounded((float)nAverage);
 				}
 				else {
-					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+					nDeltaDiff = myPID.PIDCalculate((float)nAverage);
 				}
             }
             else if (pindexLast->nHeight > PIDctrl.GetHeight()) {
@@ -1818,10 +1818,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
 	            // PID will return how much the delta diff needs to be in order to
 	            // reach the setpoint.
 				if (usePIDcalcRounded) {
-					nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
+					nDeltaDiff = PIDctrl.PIDCalculateRounded((float)nAverage);
 				}
 				else {
-					nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+					nDeltaDiff = PIDctrl.PIDCalculate((float)nAverage);
 				}
 	            // Store the calculated Difficulty and block Height 
 	            PIDctrl.SetDelta(nDeltaDiff);
@@ -1839,10 +1839,10 @@ unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockH
                 }
                 myPID = (*mi).second;
 				if (usePIDcalcRounded) {
-					nDeltaDiff = myPID.PIDCalculateRounded(float(nAverage));
+					nDeltaDiff = myPID.PIDCalculateRounded((float)nAverage);
 				}
 				else {
-					nDeltaDiff = myPID.PIDCalculate(float(nAverage));
+					nDeltaDiff = myPID.PIDCalculate((float)nAverage);
 				}
             }
         }
@@ -1952,10 +1952,10 @@ void InitPIDstate(void)
 
         // Feed the PID controller with the average nTime (in seconds)
 		if (usePIDcalcRounded) {
-			nDeltaDiff = PIDctrl.PIDCalculateRounded(float(nAverage));
+			nDeltaDiff = PIDctrl.PIDCalculateRounded((float)nAverage);
 		}
 		else {
-			nDeltaDiff = PIDctrl.PIDCalculate(float(nAverage));
+			nDeltaDiff = PIDctrl.PIDCalculate((float)nAverage);
 		}
 		// Store Rand, block height and the calculated difficulty
         PIDctrl.SetRand(nRand);
@@ -3142,12 +3142,12 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         nHeight = pindexPrev->nHeight + 1;
 
         // Check timestamp against prev
-        if (nHeight > nHEIGHT_5800 && nHeight < nHEIGHT_200000) {
+        if (nHeight > nHEIGHT_5800 && nHeight < nHEIGHT_160000) {
 			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast()) {
 				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
 			}
         }
-        else if (nHeight >= nHEIGHT_200000) {
+        else if (nHeight >= nHEIGHT_160000) {
 			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast2()) {
 				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
 			}
@@ -4243,7 +4243,15 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
             }
         }
 
-        if (!vRecv.empty()) {
+		if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.6") != std::string::npos) {
+			if ((MainNet() && chainActive.Height() > nHEIGHT_160000) || (TestNet() && chainActive.Height() > 250)) {
+				LogPrintf("Client %s runs obsolete version 0.6.x, disconnecting\n", pfrom->addr.ToString());
+				pfrom->fDisconnect = true;
+				return false;
+			}
+		}
+		
+		if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }
         if (!vRecv.empty()) {
