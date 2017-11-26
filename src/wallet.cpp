@@ -1263,10 +1263,12 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
         strFailReason = _("Transaction amounts must be positive");
         return false;
     }
-    
+#if 0    
     int64_t nFlatFee = (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
                        (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
-
+#else
+    int64_t nFlatFee = 0;
+#endif
     wtxNew.BindWallet(this);
     {
         LOCK2(cs_main, cs_wallet);
@@ -1315,8 +1317,8 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                 int64_t nChange = nValueIn - nValue - nFlatFee - nFeeRet;
 
                 // Superman III rule. 
-                // Change amount that is less than 1 CENT gets absorbed into nFlatFee.
-                if (nChange > 0 && nChange < CENT) {
+                // Change amount that is less than one hundredth of a CENT get absorbed into nFlatFee.
+                if (nChange > 0 && nChange < CENTCENT) {
                     nFlatFee += nChange;
                     nChange = 0;
                 }
@@ -1508,10 +1510,12 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64_t nV
     if (nValue <= 0) {
         return _("Invalid amount");
     }
-
+#if 0
     int64_t nFlatFee = (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
                        (int64_t)((double)nValue * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
-
+#else
+	int64_t nFlatFee = 0;
+#endif
     if (nValue + nFlatFee + nTransactionFee > GetBalance()) {
         int64_t maxtobesent = GetBalance() - nFlatFee - nTransactionFee;
         string strError = strprintf(_("Insufficient funds: The max amount of money you can send is: %s"), FormatMoney(maxtobesent));

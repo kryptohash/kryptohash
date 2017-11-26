@@ -539,10 +539,12 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 
         // Fee
         int64_t nFee = nTransactionFee * (1 + (int64_t)nBytes / 1000);
-        // Flat Fee of 0.5%
+#if 0
         int64_t nFlatFee = (int64_t)((double)nPayAmount * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
                            (int64_t)((double)nPayAmount * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
-
+#else
+		int64_t nFlatFee = 0;
+#endif
         // Min Fee
         int64_t nMinFee = GetMinFee(txDummy, nBytes, AllowFree(dPriority), GMF_SEND);
 

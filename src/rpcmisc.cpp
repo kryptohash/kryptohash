@@ -351,7 +351,7 @@ Value verifymessage(const Array& params, bool fHelp)
             /* Check if proof of work is met by doing KSHAKE320(payload) then, check if the number
             * of leading zero bytes in the hash meets the minimum required by nZeroBytes.
             */
-            uint320 hash  = KryptoHash(vchPayload.begin(), vchPayload.end());
+			uint320 hash = KSHAKE320(vchPayload.begin(), vchPayload.end());
             uint320 proof = (~uint320(0) >> nZeroBytes * 8);
             if (hash > proof) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Signature rejected - wrong proof of work");
@@ -390,7 +390,7 @@ Value verifymessage(const Array& params, bool fHelp)
         /* Check if proof of work is met by doing KSHAKE320(payload) then, check if the number
         * of leading zero bits in the hash meets the minimum required by the Diff bits.
         */
-        uint320 hash = KryptoHash(vchPayload.begin(), vchPayload.end());
+		uint320 hash = KSHAKE320(vchPayload.begin(), vchPayload.end());
         uint32_t& nBits = *(uint32_t*)(&vchPayload.end()[-8]);
         CBigNum bnTarget;
         bnTarget.SetCompact(nBits);

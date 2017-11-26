@@ -75,7 +75,7 @@ map<uint320, set<uint320> > mapOrphanTransactionsByPrev;
 void EraseOrphansFor(NodeId peer);
 
 static const int64_t nTargetTimespan = 24 * 60 * 60; // 1 day
-static const int64_t nTargetSpacing = 3 * 60; // 3 minutes
+static const int64_t nTargetSpacing = 5 * 60; // 5 minutes
 static const int64_t nInterval = nTargetTimespan / nTargetSpacing;
 
 // PID controller constants
@@ -793,7 +793,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state)
         return state.DoS(10, error("CheckTransaction() : vout empty"), REJECT_INVALID, "bad-txns-vout-empty");
     }
     // Size limits
-    const unsigned int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    const unsigned int nBlkSizeLimit = MAX_BLOCK_SIZE;
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
         return state.DoS(100, error("CheckTransaction() : size limits failed"), REJECT_INVALID, "bad-txns-oversize");
     }
@@ -981,7 +981,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
 
         int64_t nValueIn = view.GetValueIn(tx);
         int64_t nValueOut = tx.GetValueOut();
-        int64_t nFees = nValueIn-nValueOut;
+        int64_t nFees = nValueIn - nValueOut;
         if (!IsInitialBlockDownload() && nFees < tx.GetFlatFee()) {
             return state.DoS(0, error("AcceptToMemoryPool : not enough flat fee"), REJECT_INSUFFICIENTFEE, "insufficient flat fee");
         }
@@ -1270,50 +1270,27 @@ void static PruneOrphanBlocks()
     mapOrphanBlocks.erase(hash);
 }
 
-/*
-nHeight:      100 to     999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to 399 extra Coins.
-nHeight:    1,000 to   9,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to 199 extra Coins.
-nHeight:   10,000 to  99,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to  99 extra Coins.
-nHeight:  100,000 to 124,999 -> A fixed subsidy of 50 Coins plus a random subsidy of: 0 to  49 extra Coins.
-nHeight:  125,000 to 249,999 -> A fixed subsidy of 50 Coins.
-nHeight:  250,000+           -> A fixed subsidy of 25 Coins.
+
+/* 
+ * The total number of Kryptohash Coins to be mined is 20,999,958.84 (or 20,999,958,840,000 kryptohash-toshis)
 */
-int64_t GetBlockValue(int64_t nHeight, int64_t nFees, const uint320 previousHash)
+int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees)
 {
-    int64_t nSubsidy = 50;
-    const int64_t nSubsidyBegins = Params().RandomSubsidyBegins();
-    const int64_t nSubsidyEnds   = Params().RandomSubsidyEnds();
+	int halvings = nHeight / Params().Subsidy();
+	// Force block reward to zero when right shift is undefined.
+	if (halvings >= 64)
+		return nFees;
 
-    if (nHeight >= nSubsidyBegins && nHeight < nSubsidyEnds) {
-        int rc;
-        PRNG_STRUCT rndStruct;
+	int64_t nSubsidy = 50 * COIN;
+	// Subsidy is cut in half every 210,000 blocks which will occur approximately every 2 years.
+	nSubsidy >>= halvings;
+	// Subsidy ends once the amount drops below one hundredth of a cent.
+	if (nSubsidy < CENTCENT)
+		nSubsidy = 0;
 
-        keccakprng_init(&rndStruct);
-        rc = keccakprng_seed(&rndStruct, previousHash.begin(), previousHash.size());
-        if (!rc) {
-            uint32_t rand = 0;
-
-            rc = keccakprng_bytes(&rndStruct, (unsigned char*)&rand, sizeof(rand));
-            if (!rc) {
-                int nSubsidyFactor = Params().MaxSubsidy();
-                const int64_t nSubsidyRange = nSubsidyEnds - nSubsidyBegins;
-
-                for (int i = 3; i < 10; i++) 
-                {
-                    if ((nHeight % nSubsidyRange) < (int64_t)pow(10.0, i)) {
-                        break;
-                    }
-                    nSubsidyFactor >>= 1;
-                }
-                nSubsidy += (int64_t)(rand % nSubsidyFactor);
-            }
-        }
-    }
-    else if (nHeight >= nHEIGHT_250000) {
-        nSubsidy = 25;
-    }
-    return nSubsidy * COIN + nFees;
+	return nSubsidy + nFees;
 }
+
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -2488,7 +2465,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
     int64_t nFees = 0;
     int nInputs = 0;
     unsigned int nSigOps = 0;
-    const unsigned int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+    const unsigned int nSigOpsLimit = MAX_BLOCK_SIGOPS;
     CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
     std::vector<std::pair<uint320, CDiskTxPos> > vPos;
     vPos.reserve(block.vtx.size());
@@ -2516,7 +2493,7 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
                 }
             }
 
-            nFees += view.GetValueIn(tx)-tx.GetValueOut();
+            nFees += view.GetValueIn(tx) - tx.GetValueOut();
 
             std::vector<CScriptCheck> vChecks;
             if (!CheckInputs(tx, state, view, fScriptChecks, flags, nScriptCheckThreads ? &vChecks : NULL)) {
@@ -2543,10 +2520,11 @@ bool ConnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, C
         previousHash = pindex->pprev->GetBlockHash();
     }
 
-    if (pindex->nHeight > 1 && block.vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees, previousHash)) {
-        return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0].GetValueOut(), GetBlockValue(pindex->nHeight, nFees, previousHash)), REJECT_INVALID, "bad-cb-amount");
-    }
-    if (!control.Wait()) {
+	if (block.vtx[0].GetValueOut() > GetBlockSubsidy(pindex->nHeight, nFees)) {
+		return state.DoS(100, error("ConnectBlock() : coinbase pays too much (actual=%d vs limit=%d)", block.vtx[0].GetValueOut(), GetBlockSubsidy(pindex->nHeight, nFees)), REJECT_INVALID, "bad-cb-amount");
+	}
+
+	if (!control.Wait()) {
         return state.DoS(100, false);
     }
 
@@ -3055,7 +3033,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("CheckBlock() : block has no Tx"), REJECT_INVALID, "bad-tx-length");
     }
     // Block Size limit
-    const unsigned int nBlkSizeLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIZE : OLD_MAX_BLOCK_SIZE;
+    const unsigned int nBlkSizeLimit = MAX_BLOCK_SIZE;
     if (block.vtx.size() > (nBlkSizeLimit / 128) || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION) > nBlkSizeLimit) {
         return state.DoS(100, error("CheckBlock() : size exceeds limit"), REJECT_INVALID, "bad-blk-length");
     }
@@ -3110,7 +3088,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     BOOST_FOREACH(const CTransaction& tx, block.vtx) {
         nSigOps += GetLegacySigOpCount(tx);
     }
-    const unsigned int nSigOpsLimit = fNewBlockSizeLimit ? MAX_BLOCK_SIGOPS : OLD_MAX_BLOCK_SIGOPS;
+    const unsigned int nSigOpsLimit = MAX_BLOCK_SIGOPS;
     if (nSigOps > nSigOpsLimit) {
         return state.DoS(100, error("CheckBlock() : out-of-bounds SigOpCount"), REJECT_INVALID, "bad-blk-sigops", true);
     }
@@ -3147,11 +3125,6 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
 				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
 			}
         }
-        else if (nHeight >= nHEIGHT_160000) {
-			if( block.GetBlockTxTime() <= pindexPrev->GetMedianTimePast2()) {
-				return state.Invalid(error("AcceptBlock() : block's timestamp is too early"), REJECT_INVALID, "time-too-old");
-			}
-		}
 
 #if defined(KRYPTOHASH_DEV)
         // Additional timestamp checks
@@ -3189,17 +3162,7 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
         if (block.GetBlockVersion() < 1) {
             return state.Invalid(error("AcceptBlock() : rejected incorrect nVersion block"), REJECT_OBSOLETE, "bad-version");
         }
-        // Reject version=2 blocks after height 125,000 and only when 90% of the network has upgraded:
-        if (block.GetBlockVersion() < 3) {
-            if (MainNet() && nHeight > nHEIGHT_125000) {
-                if (fNewBlockSizeLimit || CBlockIndex::IsSuperMajority(2, pindexPrev, 900, 1000)) {
-                    return state.Invalid(error("AcceptBlock() : rejected nVersion=2 block"), REJECT_OBSOLETE, "bad-version");
-                }
-            }
-            else if (TestNet() && nHeight > 250) {
-                return state.Invalid(error("AcceptBlock() : rejected nVersion=2 block"), REJECT_OBSOLETE, "bad-version");
-            }
-        }
+
         // Enforce rule that the coinbase starts with serialized block height
         if (nHeight)
         {
@@ -4221,36 +4184,7 @@ bool static ProcessMessage(CNode* pfrom, CMessageHeader& hdr, CDataStream& vRecv
         if (!vRecv.empty()) {
             vRecv >> LIMITED_STRING(pfrom->strSubVer, 256);
             pfrom->cleanSubVer = SanitizeString(pfrom->strSubVer);
-        }
-
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.3") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.3.x, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
- 
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.4") != std::string::npos) {
-            LogPrintf("Client %s runs obsolete version 0.4.x, disconnecting\n", pfrom->addr.ToString());
-            pfrom->fDisconnect = true;
-            return false;
-        }
-
-        if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.5") != std::string::npos) {
-            if ((MainNet() && chainActive.Height() > nHEIGHT_125000) || (TestNet() && chainActive.Height() > 200)) {
-                LogPrintf("Client %s runs obsolete version 0.5.x, disconnecting\n", pfrom->addr.ToString());
-                pfrom->fDisconnect = true;
-                return false;
-            }
-        }
-
-		if (pfrom->cleanSubVer.find("/Kryptohatoshi:0.6") != std::string::npos) {
-			if ((MainNet() && chainActive.Height() > nHEIGHT_160000) || (TestNet() && chainActive.Height() > 250)) {
-				LogPrintf("Client %s runs obsolete version 0.6.x, disconnecting\n", pfrom->addr.ToString());
-				pfrom->fDisconnect = true;
-				return false;
-			}
-		}
-		
+        }		
 		if (!vRecv.empty()) {
             vRecv >> pfrom->nStartingHeight;
         }

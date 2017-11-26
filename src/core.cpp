@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2014-2017 Kryptohash developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -137,6 +138,7 @@ int64_t CTransaction::GetValueOut() const
 
 int64_t CTransaction::GetFlatFee() const
 {
+#if 0
     int64_t nFeeValue = GetValueOut();
     BOOST_FOREACH(const CTxOut& txout, vout)
     {
@@ -146,6 +148,9 @@ int64_t CTransaction::GetFlatFee() const
         nFeeValue = MIN_FLAT_TRANSACTION_FEE;
     }
     return nFeeValue;
+#else
+	return 0;
+#endif
 }
 
 double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
@@ -259,12 +264,7 @@ uint320 CBlockHeader::GetHash() const
 
 uint320 CBlockHeader::GetKryptoHash() const
 {
-    if (nVersion <= 1) {
-        return KryptoHash(BEGIN(nVersion), END(nNonce));
-    }
-    else {
-        return KSHAKE320v2(BEGIN(nVersion), END(nNonce));
-    }
+    return KSHAKE320(BEGIN(nVersion), END(nNonce));
 }
 
 uint320 CBlock::BuildMerkleTree() const

@@ -879,9 +879,12 @@ Value sendmany(const Array& params, bool fHelp)
     EnsureWalletIsUnlocked();
 
     // Check funds
+#if 0
     int64_t nFlatFee = (int64_t)((double)totalAmount * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
                        (int64_t)((double)totalAmount * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
-
+#else
+	int64_t nFlatFee = 0;
+#endif
     int64_t nBalance = GetAccountBalance(strAccount, nMinDepth);
     if (totalAmount + nFlatFee > nBalance) {
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");

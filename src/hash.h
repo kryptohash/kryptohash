@@ -72,18 +72,7 @@ public:
 };
 
 template<typename T1>
-inline uint320 KryptoHash(const T1 pbegin, const T1 pend)
-{
-    static unsigned char pblank[1] = { 0 };
-    unsigned char scratchpad[KPROOF_OF_WORK_SZ];
-    SHAKE320((pbegin == pend ? pblank : (unsigned char*)&pbegin[0]), (pend - pbegin) * sizeof(pbegin[0]) * 8, scratchpad, sizeof(scratchpad));
-    uint320 hash;
-    SHAKE320(scratchpad, sizeof(scratchpad) * 8, (unsigned char*)&hash, SHAKE320_L / 8);
-    return hash;
-}
-
-template<typename T1>
-inline uint320 KSHAKE320v2(const T1 pbegin, const T1 pend)
+inline uint320 KSHAKE320(const T1 pbegin, const T1 pend)
 {
     static unsigned char pblank[1] = { 0 };
     unsigned char scratchpad1[KPROOF_OF_WORK_SZ];

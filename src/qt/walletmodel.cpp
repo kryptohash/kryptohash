@@ -239,8 +239,12 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         return AmountExceedsBalance;
     }
 
+#if 0
     qint64 nFlatFee = (qint64)((double)total * FLAT_FEE_PER_TRANSACTION) > MIN_FLAT_TRANSACTION_FEE ?
                       (qint64)((double)total * FLAT_FEE_PER_TRANSACTION) : MIN_FLAT_TRANSACTION_FEE;
+#else
+	qint64 nFlatFee = 0;
+#endif
 
     if ((total + nFlatFee + (qint64)nTransactionFee) > nBalance)
     {

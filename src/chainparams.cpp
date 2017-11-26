@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
-// Copyright (c) 2014 Kryptohash developers
+// Copyright (c) 2014-2017 Kryptohash developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -36,10 +36,11 @@ public:
         nRegion = 0; //Default to Region 0
         SetRegionCode(nRegion);
 
-        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
-        nMaxSubsidy = 400;
-        nRandomSubsidyBegins = 100;
-        nRandomSubsidyEnds = 125000;
+        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 32);
+		nSubsidyHalvingInterval = 210000;
+        //nMaxSubsidy = 400;
+        //nRandomSubsidyBegins = 100;
+        //nRandomSubsidyEnds = 125000;
 
         // Build the genesis block.
         const char* pszTimestamp = "The Guardian 11/13/2014: Comet 67P becomes landing site for Philae in historic touchdown";
@@ -152,9 +153,10 @@ public:
         nRegion = 0;
         SetRegionCode(nRegion);
 
-        nMaxSubsidy = 400;
-        nRandomSubsidyBegins = 0;
-        nRandomSubsidyEnds = 125000;
+        //nMaxSubsidy = 400;
+        //nRandomSubsidyBegins = 0;
+        //nRandomSubsidyEnds = 125000;
+		nSideChainSubsidy = 
         nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 
@@ -202,9 +204,9 @@ public:
         pchMessageStart[1] = 0xfb;
         pchMessageStart[2] = 0xb5;
         pchMessageStart[3] = 0xad;
-        nMaxSubsidy = 400;
-        nRandomSubsidyBegins = 0;
-        nRandomSubsidyEnds = 125000;
+        //nMaxSubsidy = 400;
+        //nRandomSubsidyBegins = 0;
+        //nRandomSubsidyEnds = 125000;
         nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 

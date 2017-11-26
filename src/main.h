@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
-// Copyright (c) 2014-2015 Kryptohash developers
+// Copyright (c) 2014-2017 Kryptohash developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -37,8 +37,6 @@ class CInv;
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int MAX_BLOCK_SIZE = 10*1024*1024;
-/** The old maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int OLD_MAX_BLOCK_SIZE = 1000000;
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 750000;
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
@@ -48,8 +46,6 @@ static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 50000;
 static const unsigned int MAX_STANDARD_TX_SIZE = 100000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
-/** The old maximum allowed number of signature check operations in a block (network rule) */
-static const unsigned int OLD_MAX_BLOCK_SIGOPS = OLD_MAX_BLOCK_SIZE / 50;
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
 /** Default for -maxorphanblocks, maximum number of orphan blocks kept in memory */
@@ -189,7 +185,7 @@ std::string GetWarnings(std::string strFor);
 bool GetTransaction(const uint320 &hash, CTransaction &tx, uint320 &hashBlock, bool fAllowSlow = false);
 /** Find the best known block, and make it the tip of the block chain */
 bool ActivateBestChain(CValidationState &state);
-int64_t GetBlockValue(int64_t nHeight, int64_t nFees, const uint320 previousHash);
+int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees);
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
 unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fFeedPID = false);
 void InitPIDstate(void);
@@ -864,8 +860,7 @@ public:
     }
 
     enum { 
-	    nMedianTimeSpan = 11,
-	    nMedianTimeSpan2 = 81 // median of ~2 hours in the past	
+	    nMedianTimeSpan = 33,
 	};
 
     int64_t GetMedianTimePast() const
@@ -876,21 +871,6 @@ public:
 
         const CBlockIndex* pindex = this;
         for (int i = 0; i < nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
-        {
-            *(--pbegin) = pindex->GetBlockTxTime();
-        }
-        std::sort(pbegin, pend);
-        return pbegin[(pend - pbegin) / 2];
-    }
-
-    int64_t GetMedianTimePast2() const
-    {
-        int64_t pmedian[nMedianTimeSpan2];
-        int64_t* pbegin = &pmedian[nMedianTimeSpan2];
-        int64_t* pend = &pmedian[nMedianTimeSpan2];
-
-        const CBlockIndex* pindex = this;
-        for (int i = 0; i < nMedianTimeSpan2 && pindex; i++, pindex = pindex->pprev)
         {
             *(--pbegin) = pindex->GetBlockTxTime();
         }

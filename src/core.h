@@ -16,14 +16,14 @@
 
 class CTransaction;
 
-/* No transaction larger than this (in Kryptohash-toshi) is valid, including pre-mined coins */
-static const int64_t MAX_MONEY = 10000000000000 * COIN;
+/* No transaction larger than this (in Kryptohash-toshi) is valid */
+static const int64_t MAX_MONEY = 20999958840000;
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 
 // flat fee per transaction value
-static const double FLAT_FEE_PER_TRANSACTION = 0.002;
+static const double FLAT_FEE_PER_TRANSACTION = 0;
 // Min flat fee in kryptohash-toshis
-static const int64_t MIN_FLAT_TRANSACTION_FEE = 10;
+static const int64_t MIN_FLAT_TRANSACTION_FEE = 0;
 #define FLAT_TRANSACTION_FEE(x, y) \
         (min(x, (int64_t)((double)y * FLAT_FEE_PER_TRANSACTION)))
 
@@ -214,7 +214,7 @@ class CTransaction
 public:
     static int64_t nMinTxFee;
     static int64_t nMinRelayTxFee;
-    static const int CURRENT_VERSION=2;
+    static const int CURRENT_VERSION=1;
     int nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
@@ -429,7 +429,7 @@ class CBlockHeader
 {
 public:
     // header
-    static const int CURRENT_VERSION=3;
+    static const int CURRENT_VERSION=1;
     int nVersion;
     int nRegion;
     uint320  hashPrevBlock;
