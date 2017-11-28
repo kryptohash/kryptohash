@@ -66,10 +66,7 @@ public:
     int GetSideChainCode() const { return nSideChainCode; }
     uint64_t GetSideChainMask() const { return nSideChainMask; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
-	int Subsidy() const { return nSubsidyHalvingInterval; }
-    //int64_t RandomSubsidyEnds() const { return nRandomSubsidyEnds; }
-    //int64_t RandomSubsidyBegins() const { return nRandomSubsidyBegins; }
-    //int MaxSubsidy() const { return nMaxSubsidy; }
+    int Subsidy() const { return nSubsidyHalvingInterval; }
     int SideChainSubsidy() const { return nSideChainSubsidy; }
     virtual const CBlock& GenesisBlock() const = 0;
     virtual bool RequireRPCPassword() const { return true; }
@@ -119,10 +116,7 @@ protected:
     // Raw pub key bytes for the broadcast alert signing key.
     vector<unsigned char> vAlertPubKey;
     CBigNum bnProofOfWorkLimit;
-    //int64_t nRandomSubsidyBegins;
-    //int64_t nRandomSubsidyEnds;
-	//int nMaxSubsidy;
-	int nSubsidyHalvingInterval;
+    int nSubsidyHalvingInterval;
     int nSideChainCode;
     int nSideChainSubsidy;
     vector<CDNSSeedData> vSeeds;

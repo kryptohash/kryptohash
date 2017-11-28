@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2013 The Bitcoin developers
-// Copyright (c) 2014 Kryptohash developers
+// Copyright (c) 2014-2017 Kryptohash developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -313,6 +313,8 @@ Value getwork(const Array& params, bool fHelp)
         static CBlockIndex* pindexPrev;
         static int64_t nStart;
         static CBlockTemplate* pblocktemplate;
+
+#if 0
         if (!mempool.size()) {
             // return an empty block
             char pdata[128] = { 0 };
@@ -323,6 +325,7 @@ Value getwork(const Array& params, bool fHelp)
             result.push_back(Pair("target", HexStr(BEGIN(hashTarget), END(hashTarget))));
             return result;
         }
+#endif
 
         if (pindexPrev != chainActive.Tip() || (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && (GetTime() - nStart) > 15)) {
             if (pindexPrev != chainActive.Tip())

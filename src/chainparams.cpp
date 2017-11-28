@@ -26,7 +26,7 @@ public:
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
         pchMessageStart[0] = 0xf1;
-        pchMessageStart[1] = 0xeb;
+        pchMessageStart[1] = 0xec;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0x9d;
         vGenesisAddr = ParseHex("020DC9A10284FDA30C3749C308390BE2B0E2DF56BE836D136D37679F63B258EC13");
@@ -36,14 +36,11 @@ public:
         nRegion = 0; //Default to Region 0
         SetRegionCode(nRegion);
 
-        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 32);
+        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 28);
 		nSubsidyHalvingInterval = 210000;
-        //nMaxSubsidy = 400;
-        //nRandomSubsidyBegins = 100;
-        //nRandomSubsidyEnds = 125000;
 
         // Build the genesis block.
-        const char* pszTimestamp = "The Guardian 11/13/2014: Comet 67P becomes landing site for Philae in historic touchdown";
+        const char* pszTimestamp = "The New York Times 11/27/2017: As Bitcoin Scrapes $10,000, an Investment Boom Like No Other.";
         CTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
@@ -51,25 +48,25 @@ public:
         txNew.vin[0].scriptSig = CScript() << 637599743 << CScriptNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
         txNew.vout[0].nValue = 1 * COIN;
         txNew.vout[0].scriptPubKey = CScript() << vGenesisAddr << OP_CHECKSIG;
-        txNew.nTxTime = 0x149aba00000; // The millisecond when the Kryptohash Genesis block was created (UTC minus 1970/1/1 Epoch).
+        txNew.nTxTime = 0x15FFB35B590; // The millisecond when the Kryptohash Genesis block was created (UTC minus 1970/1/1 Epoch).
         genesis.vtx.push_back(txNew);
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         //std::cout << genesis.hashMerkleRoot.GetHex() << std::endl;
-        assert(genesis.hashMerkleRoot == uint320("0xD34068077BFD951BF202CA7E31D928B7B27599D65429DA5839E1338F023D85BB45115E8C8F720882"));
+        assert(genesis.hashMerkleRoot == uint320("0x7E8387C147159A25CEA51574E5D9841577E26CB01807CED2892E451C39BE7726D4C84F17B6C42EEB"));
         genesisMerkleRoot = genesis.hashMerkleRoot;
         genesis.nVersion = 1;
         genesis.nTxTime  = txNew.nTxTime;
-        genesis.nBits    = bnProofOfWorkLimit.GetCompact(); //0x2600FFFF;
+        genesis.nBits    = bnProofOfWorkLimit.GetCompact(); //0x250FFFFF;
         genesis.nTime    = 300000; // Hardcoded to 5 minutes after genesis.
-        genesis.nNonce   = 0x6261b;
+        genesis.nNonce   = 0;
 
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x000000AA3109C4FA8691DDF8F96FCFBBEDBB8B1F3BE7675B875CD1552468A58F4F8997BF6636DB9F"));
+        assert(hashGenesisBlock == uint320("0xC7D288CF00294F1837FB82412464CA537AE101EDF1BF40AB7972B9B9BA2EA60DF2EF7FABC10CAA73"));
 
-        vSeeds.push_back(CDNSSeedData("seed0.kryptohash.org", "seed0.kryptohash.org"));
-        vSeeds.push_back(CDNSSeedData("seed1.kryptohash.org", "seed1.kryptohash.org"));
+        vSeeds.push_back(CDNSSeedData("seed0.kryptohash.com", "seed0.kryptohash.com"));
+        vSeeds.push_back(CDNSSeedData("seed1.kryptohash.com", "seed1.kryptohash.com"));
 
         for (unsigned int i = 0; i < MAX_BASE58_TYPES; i++) 
         {
@@ -146,31 +143,28 @@ public:
         // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
         // a large 4-byte int at any alignment.
         pchMessageStart[0] = 0xf1;
-        pchMessageStart[1] = 0x11;
+        pchMessageStart[1] = 0x12;
         pchMessageStart[2] = 0x09;
         pchMessageStart[3] = 0x07;
         vAlertPubKey = ParseHex("02666664A1C0FD043653111261115CD51A74D37CB7814E45846718067173C94E24");
         nRegion = 0;
         SetRegionCode(nRegion);
 
-        //nMaxSubsidy = 400;
-        //nRandomSubsidyBegins = 0;
-        //nRandomSubsidyEnds = 125000;
-		nSideChainSubsidy = 
+		nSideChainSubsidy = 0;
         nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 
         // Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTxTime = 0x149ABA02710;
+        genesis.nTxTime = 0x15FFB35B600;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 0x221fbd1;
+        genesis.nNonce = 0;
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x000000071BFA8530EFDDBF308A70BA52F06402AB2223C95A6FDD21FE64B25128DB9EB171D04F4DB0"));
+        assert(hashGenesisBlock == uint320("0x74F7728492BAD6799FA080EADBF6502484F26DC9683FF9B504C9F0BEFCDF6EF421121541BF29E307"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
-        vSeeds.push_back(CDNSSeedData("testnet.kryptohash.org", "testnet.kryptohash.org"));
+        vSeeds.push_back(CDNSSeedData("testnet.kryptohash.com", "testnet.kryptohash.com"));
 
         for (unsigned int i = 0; i < MAX_BASE58_TYPES; i++)
         {
@@ -201,25 +195,23 @@ class CRegTestParams : public CTestNetParams {
 public:
     CRegTestParams() {
         pchMessageStart[0] = 0xf1;
-        pchMessageStart[1] = 0xfb;
+        pchMessageStart[1] = 0xfc;
         pchMessageStart[2] = 0xb5;
         pchMessageStart[3] = 0xad;
-        //nMaxSubsidy = 400;
-        //nRandomSubsidyBegins = 0;
-        //nRandomSubsidyEnds = 125000;
-        nSideChainMask = 0;
+
+		nSideChainMask = 0;
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 24);
 
         // Modify the Regression test genesis block so the timestamp is valid for a later start.
-        genesis.nTxTime = 0x149ABA04E20;
+        genesis.nTxTime = 0x15FFB35F000;
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
-        genesis.nNonce = 0x37aab9;
+        genesis.nNonce = 0;
         hashGenesisBlock = genesis.GetKryptoHash();
         nRegion = 0;
         SetRegionCode(nRegion);
 
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x00000051E60392D4DCEB99C06A62FD23EBE1981D51854DE5614050EAE39ABEBACB770BDDEC466B94"));
+        assert(hashGenesisBlock == uint320("0x41F2B2F31DA7AF5F588A5A7FBD48F09E765D05FB8F1C64CA1155CBC84C6972E601D8FFDCD14DF706"));
         vSeeds.clear();  // Regtest mode doesn't have any DNS seeds.
     }
 
