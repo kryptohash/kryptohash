@@ -71,6 +71,39 @@ public:
     }
 };
 
+/** A hasher class for SHAKE320. */
+class CSHAKE320
+{
+private:
+    Keccak_HashInstance h;
+
+public:
+    static const size_t OUTPUT_SIZE = 40;
+
+    void Init() {
+        Keccak_HashInitialize(&h, SHAKE320_R, SHAKE320_C, 0, SHAKE320_P);
+    }
+
+    CSHAKE320() {
+        Init();
+    }
+
+    CSHAKE320& Write(const unsigned char* data, size_t len) {
+        Keccak_HashUpdate(&h, (BitSequence *)data, len * 8);
+        return (*this);
+    }
+
+    void Finalize(unsigned char hash[OUTPUT_SIZE]) {
+        Keccak_HashFinal(&h, NULL);
+        Keccak_HashSqueeze(&h, (unsigned char*)&hash, SHAKE320_L);
+    }
+
+    CSHAKE320& Reset() {
+        Init();
+        return *this;
+    }
+};
+
 template<typename T1>
 inline uint320 KSHAKE320(const T1 pbegin, const T1 pend)
 {

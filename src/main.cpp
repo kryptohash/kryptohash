@@ -3049,6 +3049,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         if (block.vtx.empty() || !block.vtx[0].IsCoinBase()) {
             return state.DoS(100, error("CheckBlock() : first tx is not coinbase"), REJECT_INVALID, "bad-cb-missing");
         }
+#if 0
         // Block 1 is the only one allowed to have just a coinbase tx.
         if (block.vtx.size() == 1) {
             CScript block1 = CScript() << 1;
@@ -3056,6 +3057,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
                 return state.DoS(100, error("CheckBlock() : no other tx found"), REJECT_INVALID, "bad-tx-missing");
             }
         }
+#endif
     }
     // Check for additional coinbases or coinshares
     for (unsigned int i = 1; i < block.vtx.size(); i++) {
