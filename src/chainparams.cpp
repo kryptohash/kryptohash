@@ -33,8 +33,8 @@ public:
         vAlertPubKey = ParseHex("027C8D760AFB55F6B999AFE2CC8F659D63BB5FBD118750FE369D485B2F4C74D8A2");
         nSideChainCode = 0; //Default to 0. Not implemented yet.
         nSideChainMask = 0; //Default to 0. Not implemented yet.
-        nRegion = 0; //Default to Region 0
-        SetRegionCode(nRegion);
+        nZone = 0; //Default to Zone 0
+        SetZone(nZone);
 
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 28);
 		nSubsidyHalvingInterval = 210000;
@@ -108,16 +108,16 @@ public:
         return vFixedSeeds;
     }
 
-    virtual bool UpdateParams(const int nRegionIn, const CGenesis dataIn) const {
+    virtual bool UpdateParams(const int nZoneIn, const CGenesis dataIn) const {
         CBlock updateGenesis = GenesisBlock();
-        updateGenesis.nRegion = nRegionIn;
+        updateGenesis.nZone = nZoneIn;
         updateGenesis.nTxTime = dataIn.nTxTime;
         updateGenesis.nNonce = dataIn.nNonce;
 
         uint320 hash = updateGenesis.GetKryptoHash();
         if (hash == dataIn.nHash) {
-            SetRegionCode(nRegionIn);
-            genesis.nRegion = updateGenesis.nRegion;
+            SetZone(nZoneIn);
+            genesis.nZone = updateGenesis.nZone;
             genesis.nTxTime = updateGenesis.nTxTime;
             genesis.nNonce = updateGenesis.nNonce;
             hashGenesisBlock = hash;
@@ -147,8 +147,8 @@ public:
         pchMessageStart[2] = 0x09;
         pchMessageStart[3] = 0x07;
         vAlertPubKey = ParseHex("02666664A1C0FD043653111261115CD51A74D37CB7814E45846718067173C94E24");
-        nRegion = 0;
-        SetRegionCode(nRegion);
+        nZone = 0;
+        SetZone(nZone);
 
 		nSideChainSubsidy = 0;
         nSideChainMask = 0;
@@ -207,8 +207,8 @@ public:
         genesis.nBits = bnProofOfWorkLimit.GetCompact();
         genesis.nNonce = 0;
         hashGenesisBlock = genesis.GetKryptoHash();
-        nRegion = 0;
-        SetRegionCode(nRegion);
+        nZone = 0;
+        SetZone(nZone);
 
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
         assert(hashGenesisBlock == uint320("0x41F2B2F31DA7AF5F588A5A7FBD48F09E765D05FB8F1C64CA1155CBC84C6972E601D8FFDCD14DF706"));

@@ -24,7 +24,7 @@ CMessageHeader::CMessageHeader()
 {
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
-    nRegion = Params().GetRegionCode();
+    nZone = Params().GetZone();
     nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
     memset(pchCommand, 0, sizeof(pchCommand));
     pchCommand[1] = 1;
@@ -36,7 +36,7 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
 {
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
-    nRegion = Params().GetRegionCode();
+    nZone = Params().GetZone();
     nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
     nMessageSize = nMessageSizeIn;
@@ -47,7 +47,7 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
 {
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
-    nRegion = Params().GetRegionCode();
+    nZone = Params().GetZone();
     nSideChain = nSideChainIn;
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
     nMessageSize = nMessageSizeIn;
@@ -98,11 +98,11 @@ bool CMessageHeader::IsValid() const
     return true;
 }
 
-bool CMessageHeader::IsValidRegion(int nRegionIn)
+bool CMessageHeader::IsValidZone(int nZoneIn)
 {
-    if (nRegion != nRegionIn)
+    if (nZone != nZoneIn)
     {
-        LogPrintf("CMessageHeader::IsValidZone() : invalid region %u. expected %u\n", nRegion, nRegionIn);
+        LogPrintf("CMessageHeader::IsValidZone() : invalid zone %u. expected %u\n", nZone, nZoneIn);
         return false;
     }
     return true;

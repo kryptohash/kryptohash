@@ -62,7 +62,7 @@ public:
     const vector<unsigned char>& GenesisPubKey() const { return vGenesisAddr; }
     const vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
-    int GetRegionCode() const { return nRegion; }
+    int GetZone() const { return nZone; }
     int GetSideChainCode() const { return nSideChainCode; }
     uint64_t GetSideChainMask() const { return nSideChainMask; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
@@ -75,34 +75,34 @@ public:
     const vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char> &Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     virtual const vector<CAddress>& FixedSeeds() const = 0;
-    virtual bool UpdateParams(const int nRegionIn, const CGenesis dataIn) const = 0;
+    virtual bool UpdateParams(const int nZoneIn, const CGenesis dataIn) const = 0;
     int RPCPort() const { return nRPCPort; }
     void SetSideChainMask(uint64_t nSideChainMaskIn) const { nSideChainMask = nSideChainMaskIn; }
 
 protected:
     CChainParams() {}
 
-    void SetRegionCode(int nRegionIn) const {
-        nRegion = nRegionIn % MAX_NUM_OF_REGIONS;
+    void SetZone(int nZoneIn) const {
+        nZone = nZoneIn % MAX_NUM_OF_ZONES;
         if (NetworkID() == CChainParams::TESTNET) {
-            nDefaultPort = P2P_PORT_TESTNET(nRegionIn);
-            nRPCPort = RPC_PORT_TESTNET(nRegionIn);
+            nDefaultPort = P2P_PORT_TESTNET(nZoneIn);
+            nRPCPort = RPC_PORT_TESTNET(nZoneIn);
             strDataDir = "testnet";
         }
         else if (NetworkID() == CChainParams::REGTEST) {
             nDefaultPort = P2P_PORT_REGRESSION;
-            nRPCPort = RPC_PORT_TESTNET(nRegionIn);
+            nRPCPort = RPC_PORT_TESTNET(nZoneIn);
             strDataDir = "regtest";
         }
         else {
-            nDefaultPort = P2P_PORT(nRegionIn);
-            nRPCPort = RPC_PORT(nRegionIn);
-            strDataDir = "region";
+            nDefaultPort = P2P_PORT(nZoneIn);
+            nRPCPort = RPC_PORT(nZoneIn);
+            strDataDir = "zone";
         }
-        strDataDir += boost::lexical_cast<std::string>(nRegion);
+        strDataDir += boost::lexical_cast<std::string>(nZone);
     }
 
-    mutable int nRegion;
+    mutable int nZone;
     mutable int nDefaultPort;
     mutable int nRPCPort;
     mutable string strDataDir;

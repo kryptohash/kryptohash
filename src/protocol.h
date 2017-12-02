@@ -22,7 +22,7 @@
 /** Message header.
  * (4) message start.
  * (4) header version
- * (4) region
+ * (4) zone
  * (8) sidechain
  *(12) command.
  * (4) size.
@@ -39,13 +39,13 @@ class CMessageHeader
 
         std::string GetCommand() const;
         bool IsValid() const;
-        bool IsValidRegion(int nRegion);
+        bool IsValidZone(int nZone);
 
         IMPLEMENT_SERIALIZE
             (
              READWRITE(FLATDATA(pchMessageStart));
              READWRITE(nVersion);
-             READWRITE(nRegion);
+             READWRITE(nZone);
              READWRITE(nSideChain);
              READWRITE(FLATDATA(pchCommand));
              READWRITE(nMessageSize);
@@ -56,19 +56,19 @@ class CMessageHeader
     public:
         enum {
             VERSION_SIZE      = sizeof(int),
-            REGION_SIZE       = sizeof(int),
+            ZONE_SIZE         = sizeof(int),
             SIDECHAIN_SIZE    = sizeof(uint64_t),
             COMMAND_SIZE      = 12,
             MESSAGE_SIZE_SIZE = sizeof(int),
             CHECKSUM_SIZE     = sizeof(int),
 
-            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + REGION_SIZE + SIDECHAIN_SIZE,
+            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + ZONE_SIZE + SIDECHAIN_SIZE,
             CHECKSUM_OFFSET = MESSAGE_SIZE_OFFSET + MESSAGE_SIZE_SIZE,
-            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + REGION_SIZE + SIDECHAIN_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
+            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + ZONE_SIZE + SIDECHAIN_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
         };
         char pchMessageStart[MESSAGE_START_SIZE];
         int nVersion;
-        int nRegion;
+        int nZone;
         uint64_t nSideChain;
         char pchCommand[COMMAND_SIZE];
         unsigned int nMessageSize;

@@ -197,7 +197,7 @@ std::string HelpMessage(HelpMessageMode hmm)
     strUsage += "  -?                     " + _("This help message") + "\n";
     strUsage += "  -conf=<file>           " + _("Specify configuration file (default: kryptohash.conf)") + "\n";
     strUsage += "  -datadir=<dir>         " + _("Specify data directory") + "\n";
-    strUsage += "  -region=<n>            " + _("Specify region number (range: 0 - 255; default: 0)") + "\n";
+    strUsage += "  -zone=<n>              " + _("Specify zone number (range: 0 - 255; default: 0)") + "\n";
     strUsage += "  -testnet               " + _("Use the test network") + "\n";
     strUsage += "  -pid=<file>            " + _("Specify pid file (default: kryptohashd.pid)") + "\n";
 #if 0 //def ENABLE_WALLET
@@ -550,21 +550,21 @@ bool AppInit2(boost::thread_group& threadGroup)
             nConnectTimeout = nNewTimeout;
     }
     
-    if (mapArgs.count("-region"))
+    if (mapArgs.count("-zone"))
     {
-        int nRegionCode = GetArg("-region", 0);
+        int nZoneCode = GetArg("-zone", 0);
 
-        if (nRegionCode < 0 || nRegionCode >= MAX_NUM_OF_REGIONS)
-            return InitError(strprintf(_("Invalid region value: %s"), mapArgs["-region"]));
+        if (nZoneCode < 0 || nZoneCode >= MAX_NUM_OF_ZONES)
+            return InitError(strprintf(_("Invalid zone value: %s"), mapArgs["-zone"]));
 
-        if (nRegionCode != 0) {
+        if (nZoneCode != 0) {
             CGenesis data;
 
-            if (!Genesis::GetGenesisData(nRegionCode, data))
-                return InitError(strprintf(_("Could not find a Genesis block for region %s"), mapArgs["-region"]));
+            if (!Genesis::GetGenesisData(nZoneCode, data))
+                return InitError(strprintf(_("Could not find a Genesis block for zone %s"), mapArgs["-zone"]));
 
-            if (!Params().UpdateParams(nRegionCode, data))
-                return InitError(strprintf(_("Genesis block for region %s contains bad parameters"), mapArgs["-region"]));
+            if (!Params().UpdateParams(nZoneCode, data))
+                return InitError(strprintf(_("Genesis block for zone %s contains bad parameters"), mapArgs["-zone"]));
         }
     }
     
@@ -645,7 +645,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
     if (!fLogTimestamps)
         LogPrintf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
-    LogPrintf("Region %d\n", Params().GetRegionCode());
+    LogPrintf("Zone %d\n", Params().GetZone());
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
     LogPrintf("Using data directory %s\n", strDataDir);
     LogPrintf("Using at most %i connections (%i file descriptors available)\n", nMaxConnections, nFD);

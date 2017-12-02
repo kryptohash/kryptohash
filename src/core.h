@@ -431,7 +431,7 @@ public:
     // header
     static const int CURRENT_VERSION=1;
     int nVersion;
-    int nRegion;
+    int nZone;
     uint320  hashPrevBlock;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
@@ -450,7 +450,7 @@ public:
     (
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
-        READWRITE(nRegion);
+        READWRITE(nZone);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nTxTime);
@@ -464,7 +464,7 @@ public:
     void SetNull()
     {
         nVersion = CBlockHeader::CURRENT_VERSION;
-        nRegion = Params().GetRegionCode();
+        nZone = Params().GetZone();
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
         nTxTime = 0;
@@ -563,7 +563,7 @@ public:
     {
         CBlockHeader block;
         block.nVersion       = nVersion;
-        block.nRegion        = nRegion;
+        block.nZone          = nZone;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;

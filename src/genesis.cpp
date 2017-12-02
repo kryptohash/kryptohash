@@ -37,11 +37,11 @@ namespace Genesis
             return mapGenesisRegtest;
     }
 
-    bool GetGenesisData(int nRegion, CGenesis& data)
+    bool GetGenesisData(int nZone, CGenesis& data)
     {
         const MapGenesis& genesis = Genesis();
 
-        MapGenesis::const_iterator i = genesis.find(nRegion);
+        MapGenesis::const_iterator i = genesis.find(nZone);
         if (i == genesis.end() || i->first == -1)
             return false;
 

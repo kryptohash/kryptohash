@@ -10,7 +10,7 @@
 #include "uint256.h"
 
 /*
- * These are compiled-in genesis blocks for each available region.
+ * These are compiled-in genesis blocks for each available zone.
  */
 
 class CGenesis
@@ -39,8 +39,8 @@ public:
 namespace Genesis
 {
 
-    // Returns true if region contains a genesis block
-    bool GetGenesisData(int nRegion, CGenesis& data);
+    // Returns true if zone contains a genesis block
+    bool GetGenesisData(int nZone, CGenesis& data);
 
 }
 

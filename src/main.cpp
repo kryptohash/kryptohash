@@ -4847,7 +4847,7 @@ bool ProcessMessages(CNode* pfrom)
     //
     // Message format
     //  (4) message start
-    //  (2) region
+    //  (2) zone
     //  (2) #coin.
     //  (12) command
     //  (4) size
@@ -4898,8 +4898,8 @@ bool ProcessMessages(CNode* pfrom)
             LogPrintf("\n\nPROCESSMESSAGE: ERRORS IN HEADER %s\n\n\n", SanitizeString(hdr.GetCommand()));
             continue;
         }
-        // Check if this message belongs to our Region.
-        if (!hdr.IsValidRegion(Params().GetRegionCode()) ) {
+        // Check if this message belongs to our zone.
+        if (!hdr.IsValidZone(Params().GetZone()) ) {
             fOk = false;
             break;
         }

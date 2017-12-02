@@ -382,7 +382,7 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
         struct unnamed2
         {
             int nVersion;            //  4 bytes
-            int nRegion;             //  4 bytes
+            int nZone;               //  4 bytes
             uint320  hashPrevBlock;  // 40 bytes
             uint320  hashMerkleRoot; // 40 bytes
             int64_t  nTxTime;        //  8 bytes
@@ -399,7 +399,7 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     memset(&tmp, 0, sizeof(tmp));
 
     tmp.block.nVersion        = pblock->nVersion;
-    tmp.block.nRegion         = pblock->nRegion;
+    tmp.block.nZone           = pblock->nZone;
     tmp.block.hashPrevBlock   = pblock->hashPrevBlock;
     tmp.block.hashMerkleRoot  = pblock->hashMerkleRoot;
     tmp.block.nTxTime         = pblock->nTxTime;

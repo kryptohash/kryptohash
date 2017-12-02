@@ -733,7 +733,7 @@ public:
 
     // block header
     int nVersion;
-    int nRegion;
+    int nZone;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
     uint64_t nSideChain;
@@ -760,7 +760,7 @@ public:
         nSequenceId = 0;
 
         nVersion        = 0;
-        nRegion         = 0;
+        nZone           = 0;
         hashMerkleRoot  = 0;
         nTxTime         = 0;
         nSideChain      = 0;
@@ -785,7 +785,7 @@ public:
         nSequenceId = 0;
 
         nVersion        = block.nVersion;
-        nRegion         = block.nRegion;
+        nZone           = block.nZone;
         hashMerkleRoot  = block.hashMerkleRoot;
         nTxTime         = block.nTxTime;
         nSideChain      = block.nSideChain;
@@ -817,7 +817,7 @@ public:
     {
         CBlockHeader block;
         block.nVersion       = nVersion;
-        block.nRegion        = nRegion;
+        block.nZone          = nZone;
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
@@ -952,7 +952,7 @@ public:
 
         // block header
         READWRITE(this->nVersion);
-        READWRITE(nRegion);
+        READWRITE(nZone);
         READWRITE(hashPrev);
         READWRITE(hashMerkleRoot);
         READWRITE(nTxTime);
@@ -968,7 +968,7 @@ public:
         CBlockHeader block;
 
         block.nVersion       = nVersion;
-        block.nRegion        = nRegion;
+        block.nZone          = nZone;
         block.hashPrevBlock  = hashPrev;
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
