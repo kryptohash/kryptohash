@@ -100,7 +100,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     txNew.vout.resize(1);
     txNew.vout[0].scriptPubKey = scriptPubKeyIn;
     txNew.nTxTime = GetTimeMillis();
-    txNew.nSideChain = 0; // Always zero. Future enhancement
 
     // Add our coinbase tx as first transaction
     pblock->vtx.push_back(txNew);
@@ -376,35 +375,30 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     //
     // Pre-build hash buffers
     //
-#pragma pack(push,4)
+#pragma pack(push, 4)
     struct
     {
         struct unnamed2
         {
-            int nVersion;            //  4 bytes
-            int nZone;               //  4 bytes
-            uint320  hashPrevBlock;  // 40 bytes
-            uint320  hashMerkleRoot; // 40 bytes
-            int64_t  nTxTime;        //  8 bytes
-            uint64_t nSideChain;     //  8 bytes
-            uint32_t sigchecksum;    //  4 bytes
-            uint32_t nBits;          //  4 bytes
-            uint32_t nTime;          //  4 bytes
-            uint32_t nNonce;         //  4 bytes
-        } block;                     //120 bytes
+            int      nVersion;          //  4 bytes
+            uint320  hashPrevBlock;     // 40 bytes
+            uint320  hashMerkleRoot;    // 40 bytes
+            uint32_t nBits;             //  4 bytes
+            int64_t  nTxTime;           //  8 bytes
+            uint32_t nTime;             //  4 bytes
+            uint32_t nNonce;            //  4 bytes
+            uint8_t  pchHeaderPad[16];  // 16 bytes
+        } block;                        //120 bytes
         unsigned char pchPadding[72];
     } tmp;
 #pragma pack(pop)
 
     memset(&tmp, 0, sizeof(tmp));
 
-    tmp.block.nVersion        = pblock->nVersion;
-    tmp.block.nZone           = pblock->nZone;
+    tmp.block.nVersion        = pblock->nVersion | (pblock->nZone << 16);
     tmp.block.hashPrevBlock   = pblock->hashPrevBlock;
     tmp.block.hashMerkleRoot  = pblock->hashMerkleRoot;
     tmp.block.nTxTime         = pblock->nTxTime;
-    tmp.block.nSideChain      = pblock->nSideChain;
-    tmp.block.sigchecksum     = pblock->sigchecksum;
     tmp.block.nBits           = pblock->nBits;
     tmp.block.nTime           = pblock->nTime;
     tmp.block.nNonce          = pblock->nNonce;
@@ -412,8 +406,8 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     FormatHashBlocks(&tmp.block, sizeof(tmp.block));
 
     if (keccakInstance != NULL) {
-        // Precalc the first 112 bytes of the block header, which stays constant
-        Keccak_HashUpdate(keccakInstance, (BitSequence *)&tmp.block, 112 * 8);
+        // Precalc the first 96 bytes of the block header, which stays constant
+        Keccak_HashUpdate(keccakInstance, (BitSequence *)&tmp.block, 96 * 8);
     }
     memcpy(pdata, &tmp.block, sizeof(tmp.block));
 }
@@ -500,7 +494,7 @@ unsigned int static ScanKryptoHash(Keccak_HashInstance *keccakHeader, char* pdat
     {
         Keccak_HashInstance keccakInstance;
 
-        // Make a copy of the keccak instance that contains the hash of the first 112 bytes of the block header.
+        // Make a copy of the keccak instance that contains the hash of the first 96 bytes of the block header.
         keccakInstance = *keccakHeader;
 
         // Using hash of the header that was previous calculated, hash pdata that has a new Nonce
@@ -509,24 +503,18 @@ unsigned int static ScanKryptoHash(Keccak_HashInstance *keccakHeader, char* pdat
         Keccak_HashFinal(&keccakInstance, NULL);
         Keccak_HashSqueeze(&keccakInstance, (BitSequence *)phash1, KPROOF_OF_WORK_SZ * 8);
 
-        if (version <= 1) {
-	        // Now hash phash1 into phash using SHAKE320
-            SHAKE320(phash1, KPROOF_OF_WORK_SZ * 8, (BitSequence *)phash, 40);
-        }
-        else {
-            // Swap blocks in chunks of KRATE size
-            unsigned char *p1 = phash1 + KPROOF_OF_WORK_SZ;
-            unsigned char scratchpad2[KPROOF_OF_WORK_SZ + 16];
-            unsigned char *p2 = alignup<16>(scratchpad2);
+        // Swap blocks in chunks of KRATE size
+        unsigned char *p1 = phash1 + KPROOF_OF_WORK_SZ;
+        unsigned char scratchpad2[KPROOF_OF_WORK_SZ + 16];
+        unsigned char *p2 = alignup<16>(scratchpad2);
 
-            for (int i = 0; i < KPOW_MUL; i++)
-            {
-                p1 -= KRATE;
-                memcpy(p2, p1, KRATE);
-                p2 += KRATE;
-            }
-            SHAKE320(scratchpad2, KPROOF_OF_WORK_SZ * 8, (BitSequence *)phash, 40);
+        for (int i = 0; i < KPOW_MUL; i++)
+        {
+            p1 -= KRATE;
+            memcpy(p2, p1, KRATE);
+            p2 += KRATE;
         }
+        SHAKE320(scratchpad2, KPROOF_OF_WORK_SZ * 8, (BitSequence *)phash, 40);
 
         // Return the nonce if the hash has at least some zero bits,
         // caller will check if it has enough to reach the target
@@ -599,8 +587,8 @@ void static KryptohashMiner(CWallet *pwallet)
             FormatKryptoHashBuffers(pblock, &keccakHeader, pdata);
 
             int32_t& nVersion     = *(int32_t *)(pdata +   0);
-            uint32_t& nBlockTime  = *(uint32_t*)(pdata + 112);
-            uint32_t& nBlockNonce = *(uint32_t*)(pdata + 116);
+            uint32_t& nBlockTime  = *(uint32_t*)(pdata +  96);
+            uint32_t& nBlockNonce = *(uint32_t*)(pdata + 100);
 
             uint320 hashTarget = CBigNum().SetCompact(pblock->nBits).getuint320();
             uint320 hashbuf[2];

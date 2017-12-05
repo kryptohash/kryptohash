@@ -220,7 +220,6 @@ public:
     std::vector<CTxOut> vout;
     int64_t nTxTime;
     int64_t nLockTime;
-    uint64_t nSideChain;
 
     // Denial-of-service detection:
     mutable int nDoS;
@@ -238,7 +237,6 @@ public:
         READWRITE(vout);
         READWRITE(nTxTime);
         READWRITE(nLockTime);
-        READWRITE(nSideChain);
     )
 
     void SetNull()
@@ -248,7 +246,6 @@ public:
         vout.clear();
         nTxTime = 0;
         nLockTime = 0;
-        nSideChain = 0;
         nDoS = 0;  // Denial-of-service prevention
     }
 
@@ -301,8 +298,7 @@ public:
                 a.vin         == b.vin &&
                 a.vout        == b.vout &&
                 a.nTxTime     == b.nTxTime &&
-                a.nLockTime   == b.nLockTime &&
-                a.nSideChain  == b.nSideChain );
+                a.nLockTime   == b.nLockTime );
     }
 
     friend bool operator!=(const CTransaction& a, const CTransaction& b)
@@ -430,16 +426,15 @@ class CBlockHeader
 public:
     // header
     static const int CURRENT_VERSION=1;
-    int nVersion;
-    int nZone;
+    int  nVersion;
     uint320  hashPrevBlock;
     uint320  hashMerkleRoot;
-    int64_t  nTxTime;
-    uint64_t nSideChain;
-    uint32_t sigchecksum;
     uint32_t nBits;
+    int64_t  nTxTime;
     uint32_t nTime;
     uint32_t nNonce;
+    uint8_t  padding[16];
+    mutable uint8_t nZone;
 
     CBlockHeader()
     {
@@ -450,29 +445,25 @@ public:
     (
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
-        READWRITE(nZone);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        READWRITE(nTxTime);
-        READWRITE(nSideChain);
-        READWRITE(sigchecksum);
         READWRITE(nBits);
+        READWRITE(nTxTime);
         READWRITE(nTime);
         READWRITE(nNonce);
     )
 
     void SetNull()
     {
-        nVersion = CBlockHeader::CURRENT_VERSION;
         nZone = Params().GetZone();
+        nVersion = CBlockHeader::CURRENT_VERSION | (nZone << 16);
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
-        nTxTime = 0;
-        nSideChain = 0;
-        sigchecksum = 0;
         nBits = 0;
+        nTxTime = 0;
         nTime = 0;
         nNonce = 0;
+        memset(padding, 0, sizeof(padding));
     }
 
     bool IsNull() const
@@ -567,8 +558,6 @@ public:
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
-        block.nSideChain     = nSideChain;
-        block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
         block.nTime          = nTime;
         block.nNonce         = nNonce;

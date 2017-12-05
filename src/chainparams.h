@@ -62,12 +62,10 @@ public:
     const vector<unsigned char>& GenesisPubKey() const { return vGenesisAddr; }
     const vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
-    int GetZone() const { return nZone; }
-    int GetSideChainCode() const { return nSideChainCode; }
+    int16_t GetZone() const { return nZone; }
     uint64_t GetSideChainMask() const { return nSideChainMask; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int Subsidy() const { return nSubsidyHalvingInterval; }
-    int SideChainSubsidy() const { return nSideChainSubsidy; }
     virtual const CBlock& GenesisBlock() const = 0;
     virtual bool RequireRPCPassword() const { return true; }
     const string& DataDir() const { return strDataDir; }
@@ -102,7 +100,7 @@ protected:
         strDataDir += boost::lexical_cast<std::string>(nZone);
     }
 
-    mutable int nZone;
+    mutable int16_t nZone;
     mutable int nDefaultPort;
     mutable int nRPCPort;
     mutable string strDataDir;
@@ -117,8 +115,6 @@ protected:
     vector<unsigned char> vAlertPubKey;
     CBigNum bnProofOfWorkLimit;
     int nSubsidyHalvingInterval;
-    int nSideChainCode;
-    int nSideChainSubsidy;
     vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
 };

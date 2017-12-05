@@ -21,9 +21,8 @@
 
 /** Message header.
  * (4) message start.
- * (4) header version
- * (4) zone
- * (8) sidechain
+ * (2) header version
+ * (2) zone
  *(12) command.
  * (4) size.
  * (4) checksum.
@@ -31,22 +30,19 @@
 class CMessageHeader
 {
     public:
-        static const int CURRENT_VERSION = 1;
-        static const uint64_t CURRENT_SIDECHAIN = 0;
+        static const int16_t CURRENT_VERSION = 1;
         CMessageHeader();
         CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn);
-        CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nSideChainMaskIn);
 
         std::string GetCommand() const;
         bool IsValid() const;
-        bool IsValidZone(int nZone);
+        bool IsValidZone(int16_t nZone);
 
         IMPLEMENT_SERIALIZE
             (
              READWRITE(FLATDATA(pchMessageStart));
-             READWRITE(nVersion);
              READWRITE(nZone);
-             READWRITE(nSideChain);
+             READWRITE(nVersion);
              READWRITE(FLATDATA(pchCommand));
              READWRITE(nMessageSize);
              READWRITE(nChecksum);
@@ -55,21 +51,19 @@ class CMessageHeader
     // TODO: make private (improves encapsulation)
     public:
         enum {
-            VERSION_SIZE      = sizeof(int),
-            ZONE_SIZE         = sizeof(int),
-            SIDECHAIN_SIZE    = sizeof(uint64_t),
+            VERSION_SIZE      = sizeof(int16_t),
+            ZONE_SIZE         = sizeof(int16_t),
             COMMAND_SIZE      = 12,
             MESSAGE_SIZE_SIZE = sizeof(int),
             CHECKSUM_SIZE     = sizeof(int),
 
-            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + ZONE_SIZE + SIDECHAIN_SIZE,
+            MESSAGE_SIZE_OFFSET = MESSAGE_START_SIZE + COMMAND_SIZE + VERSION_SIZE + ZONE_SIZE,
             CHECKSUM_OFFSET = MESSAGE_SIZE_OFFSET + MESSAGE_SIZE_SIZE,
-            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + ZONE_SIZE + SIDECHAIN_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
+            HEADER_SIZE = MESSAGE_START_SIZE + VERSION_SIZE + ZONE_SIZE + COMMAND_SIZE + MESSAGE_SIZE_SIZE + CHECKSUM_SIZE
         };
         char pchMessageStart[MESSAGE_START_SIZE];
-        int nVersion;
-        int nZone;
-        uint64_t nSideChain;
+        int16_t nVersion;
+        int16_t nZone;
         char pchCommand[COMMAND_SIZE];
         unsigned int nMessageSize;
         unsigned int nChecksum;

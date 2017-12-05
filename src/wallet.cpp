@@ -1377,9 +1377,6 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                     wtxNew.vin.push_back(CTxIn(coin.first->GetHash(), coin.second));
                 }
 
-                // Add SideChain
-                int nSideChainCode = Params().GetSideChainCode() % 0x40;
-                wtxNew.nSideChain = nSideChainCode ? (1 << nSideChainCode) : 0;
                 // Add the timestamp
                 wtxNew.nTxTime = GetTimeMillis();
 

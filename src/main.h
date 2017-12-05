@@ -732,67 +732,66 @@ public:
     unsigned int nStatus;
 
     // block header
-    int nVersion;
-    int nZone;
+    int  nVersion;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
-    uint64_t nSideChain;
-    uint32_t sigchecksum;
     uint32_t nBits;
     uint32_t nTime;
     uint32_t nNonce;
+    unsigned char padding[16];
+
+    // (memory only) Zone number
+    uint8_t  nZone;
 
     // (memory only) Sequencial id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
 
     CBlockIndex()
     {
-        phashBlock = NULL;
-        pprev = NULL;
-        nHeight = 0;
-        nFile = 0;
-        nDataPos = 0;
-        nUndoPos = 0;
-        nChainWork = 0;
-        nTx = 0;
-        nChainTx = 0;
-        nStatus = 0;
+        phashBlock  = NULL;
+        pprev       = NULL;
+        nHeight     = 0;
+        nFile       = 0;
+        nDataPos    = 0;
+        nUndoPos    = 0;
+        nChainWork  = 0;
+        nTx         = 0;
+        nChainTx    = 0;
+        nStatus     = 0;
         nSequenceId = 0;
+        nZone       = 0;
 
-        nVersion        = 0;
-        nZone           = 0;
-        hashMerkleRoot  = 0;
-        nTxTime         = 0;
-        nSideChain      = 0;
-        sigchecksum     = 0;
-        nBits           = 0;
-        nTime           = 0;
-        nNonce          = 0;
+        nVersion       = 0;
+        hashMerkleRoot = 0;
+        nTxTime        = 0;
+        nBits          = 0;
+        nTime          = 0;
+        nNonce         = 0;
+        memset(padding, 0, sizeof(padding));
     }
 
     CBlockIndex(CBlockHeader& block)
     {
-        phashBlock = NULL;
-        pprev = NULL;
-        nHeight = 0;
-        nFile = 0;
-        nDataPos = 0;
-        nUndoPos = 0;
-        nChainWork = 0;
-        nTx = 0;
-        nChainTx = 0;
-        nStatus = 0;
+        phashBlock  = NULL;
+        pprev       = NULL;
+        nHeight     = 0;
+        nFile       = 0;
+        nDataPos    = 0;
+        nUndoPos    = 0;
+        nChainWork  = 0;
+        nTx         = 0;
+        nChainTx    = 0;
+        nStatus     = 0;
         nSequenceId = 0;
 
-        nVersion        = block.nVersion;
         nZone           = block.nZone;
+        nVersion        = block.nVersion | (nZone << 16);
         hashMerkleRoot  = block.hashMerkleRoot;
         nTxTime         = block.nTxTime;
-        nSideChain      = block.nSideChain;
-        sigchecksum     = block.sigchecksum;
         nBits           = block.nBits;
         nTime           = block.nTime;
         nNonce          = block.nNonce;
+        memset(padding, 0, sizeof(padding));
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -817,16 +816,14 @@ public:
     {
         CBlockHeader block;
         block.nVersion       = nVersion;
-        block.nZone          = nZone;
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
-        block.nSideChain     = nSideChain;
-        block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
         block.nTime          = nTime;
         block.nNonce         = nNonce;
+        memset(block.padding, 0, sizeof(padding));
         return block;
     }
 
@@ -952,14 +949,11 @@ public:
 
         // block header
         READWRITE(this->nVersion);
-        READWRITE(nZone);
         READWRITE(hashPrev);
         READWRITE(hashMerkleRoot);
-        READWRITE(nTxTime);
-        READWRITE(nSideChain);
-        READWRITE(sigchecksum);
-        READWRITE(nTime);
         READWRITE(nBits);
+        READWRITE(nTxTime);
+        READWRITE(nTime);
         READWRITE(nNonce);
     )
 
@@ -968,13 +962,10 @@ public:
         CBlockHeader block;
 
         block.nVersion       = nVersion;
-        block.nZone          = nZone;
         block.hashPrevBlock  = hashPrev;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.nTxTime        = nTxTime;
-        block.nSideChain     = nSideChain;
-        block.sigchecksum    = sigchecksum;
         block.nBits          = nBits;
+        block.nTxTime        = nTxTime;
         block.nTime          = nTime;
         block.nNonce         = nNonce;
 

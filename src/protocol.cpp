@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2014 The Bitcoin developers
-// Copyright (c) 2014 Kryptohash developers
+// Copyright (c) 2014-2017 Kryptohash developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,7 +25,6 @@ CMessageHeader::CMessageHeader()
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
     nZone = Params().GetZone();
-    nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
     memset(pchCommand, 0, sizeof(pchCommand));
     pchCommand[1] = 1;
     nMessageSize = -1;
@@ -37,18 +36,6 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
     memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
     nVersion = CMessageHeader::CURRENT_VERSION;
     nZone = Params().GetZone();
-    nSideChain = CMessageHeader::CURRENT_SIDECHAIN;
-    strncpy(pchCommand, pszCommand, COMMAND_SIZE);
-    nMessageSize = nMessageSizeIn;
-    nChecksum = 0;
-}
-
-CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn, uint64_t nSideChainIn)
-{
-    memcpy(pchMessageStart, Params().MessageStart(), MESSAGE_START_SIZE);
-    nVersion = CMessageHeader::CURRENT_VERSION;
-    nZone = Params().GetZone();
-    nSideChain = nSideChainIn;
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
     nMessageSize = nMessageSizeIn;
     nChecksum = 0;
@@ -98,7 +85,7 @@ bool CMessageHeader::IsValid() const
     return true;
 }
 
-bool CMessageHeader::IsValidZone(int nZoneIn)
+bool CMessageHeader::IsValidZone(int16_t nZoneIn)
 {
     if (nZone != nZoneIn)
     {
