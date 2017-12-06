@@ -1267,7 +1267,7 @@ void static PruneOrphanBlocks()
 
 
 /* 
- * The total number of Kryptohash Coins to be mined is 20,999,958.84 (or 20,999,958,840,000 kryptohash-toshis)
+ * The total number of Kryptohash Coins to be mined is 20,997,436.32 (or 20,997,436,320,000 kryptohash-toshis)
 */
 int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees)
 {
@@ -1279,8 +1279,8 @@ int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees)
 	int64_t nSubsidy = 50 * COIN;
 	// Subsidy is cut in half every 210,000 blocks which will occur approximately every 2 years.
 	nSubsidy >>= halvings;
-	// Subsidy ends once the amount drops below one hundredth of a cent.
-	if (nSubsidy < CENTCENT)
+	// Subsidy ends once the amount drops below one Cent.
+	if (nSubsidy < CENT)
 		nSubsidy = 0;
 
 	return nSubsidy + nFees;
@@ -1956,6 +1956,10 @@ bool CheckProofOfWork(uint320 hash, unsigned int nBits)
     CBigNum bnTarget;
     bnTarget.SetCompact(nBits);
 
+    // If this is genesis block, we don't care about Proof of Work
+    if (hash == Params().HashGenesisBlock()) {
+        return true;
+    }
     // Check range
     if (bnTarget <= 0 || bnTarget > Params().ProofOfWorkLimit()) {
         return error("CheckProofOfWork() : nBits below minimum work");
@@ -2860,8 +2864,8 @@ bool AddToBlockIndex(CBlock& block, CValidationState& state, const CDiskBlockPos
     CBlockIndex* pindexNew = new CBlockIndex(block);
     assert(pindexNew);
     {
-         LOCK(cs_nBlockSequenceId);
-         pindexNew->nSequenceId = nBlockSequenceId++;
+        LOCK(cs_nBlockSequenceId);
+        pindexNew->nSequenceId = nBlockSequenceId++;
     }
     map<uint320, CBlockIndex*>::iterator mi = mapBlockIndex.insert(make_pair(hash, pindexNew)).first;
     pindexNew->phashBlock = &((*mi).first);
@@ -3001,27 +3005,19 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, unsigne
     return true;
 }
 
-bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool fCheckPOW)
+bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot)
 {
+    uint320 hash = block.GetKryptoHash();
+    // These are checks that are independent of context
+    // that can be verified before saving an orphan block.
+
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetKryptoHash(), block.nBits)) {
+    if (fCheckPOW && !CheckProofOfWork(hash, block.nBits)) {
         return state.DoS(50, error("CheckBlock() : proof of work failed"), REJECT_INVALID, "high-hash");
     }
     // Check timestamp
     if (block.GetBlockTxTime() > (GetAdjustedTime() + 2 * 60 * 60) * 1000) { // Two hours in the future
         return state.Invalid(error("CheckBlock() : block timestamp too far in the future"), REJECT_INVALID, "time-too-new");
-    }
-
-    return true;
-}
-
-bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot)
-{
-    // These are checks that are independent of context
-    // that can be verified before saving an orphan block.
-
-    if (!CheckBlockHeader(block, state, fCheckPOW)) {
-        return false;
     }
     // Tx size check
     if (block.vtx.empty()) {
@@ -3033,7 +3029,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
         return state.DoS(100, error("CheckBlock() : size exceeds limit"), REJECT_INVALID, "bad-blk-length");
     }
     // Special case for Genesis block
-    if (block.GetKryptoHash() == Params().HashGenesisBlock()) {
+    if (hash == Params().HashGenesisBlock()) {
         // First transaction must be coinshare, the rest must not be
         if (block.vtx.empty() || !block.vtx[0].IsCoinShare()) {
             return state.DoS(100, error("CheckBlock() : first tx in genesis is not coinshare"), REJECT_INVALID, "bad-cs-missing");

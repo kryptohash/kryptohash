@@ -1315,13 +1315,14 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, int64_t> >& vecSend,
                 }
 
                 int64_t nChange = nValueIn - nValue - nFlatFee - nFeeRet;
-
+#if 0
                 // Superman III rule. 
                 // Change amount that is less than one hundredth of a CENT get absorbed into nFlatFee.
                 if (nChange > 0 && nChange < CENTCENT) {
                     nFlatFee += nChange;
                     nChange = 0;
                 }
+#endif
                 // Set the return flat fee amount.
                 nFlatFeeRet = nFlatFee;
 

@@ -29,12 +29,12 @@ public:
         pchMessageStart[1] = 0xec;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0x9d;
-        vGenesisAddr = ParseHex("020DC9A10284FDA30C3749C308390BE2B0E2DF56BE836D136D37679F63B258EC13");
-        vAlertPubKey = ParseHex("027C8D760AFB55F6B999AFE2CC8F659D63BB5FBD118750FE369D485B2F4C74D8A2");
+        vGenesisAddr = ParseHex("025aded1f018d630090b2f80abeb4cce19acf06822e64a657341ba43ea3ddb5270");
+        vAlertPubKey = ParseHex("02666664a1c0fd043653111261115cd51a74d37cb7814e45846718067173c94e24");
         nZone = 0; // Default to Zone 0. Future enhancement.
         SetZone(nZone);
 
-        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 0);
+        bnProofOfWorkLimit = CBigNum(~uint320(0) >> 28);
 		nSubsidyHalvingInterval = 210000;
 
         // Build the genesis block.
@@ -51,17 +51,17 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         //std::cout << genesis.hashMerkleRoot.GetHex() << std::endl;
-        assert(genesis.hashMerkleRoot == uint320("0xA4F0BD710F989308003081F43CBD162E82C873FABDD6A08D580982626DE79E40240FAD54CDB2EA07"));
+        assert(genesis.hashMerkleRoot == uint320("0x5839320DCB97EDC2227B0019E6C164571F1B927DF3B5AC7E0EE33953BEDEE9929E9BCE2ABE831DB8"));
         genesisMerkleRoot = genesis.hashMerkleRoot;
         genesis.nVersion = 1 | (nZone << 16);
         genesis.nTxTime  = txNew.nTxTime;
-        genesis.nBits    = bnProofOfWorkLimit.GetCompact(); //0x2900FFFF;
+        genesis.nBits    = 0x2900FFFF;
         genesis.nTime    = 300000; // Hardcoded to 5 minutes after genesis.
         genesis.nNonce   = 0;
 
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x519BC7F14B11CD93486F961E70806AFA7A1E669166392048886F0C85798818DCEE22B07A5E874EB0"));
+        assert(hashGenesisBlock == uint320("0x5FEED38FFEF7AC5903F62BDE8E80CC79B04D0FF289BA68528F0224691F49E36540E4710BCDED5DA9"));
 
         vSeeds.push_back(CDNSSeedData("seed0.kryptohash.com", "seed0.kryptohash.com"));
         vSeeds.push_back(CDNSSeedData("seed1.kryptohash.com", "seed1.kryptohash.com"));
@@ -144,7 +144,7 @@ public:
         pchMessageStart[1] = 0x12;
         pchMessageStart[2] = 0x09;
         pchMessageStart[3] = 0x07;
-        vAlertPubKey = ParseHex("02666664A1C0FD043653111261115CD51A74D37CB7814E45846718067173C94E24");
+        vAlertPubKey = ParseHex("021f0e0b917aa91c53dbd386d362671562a1ae8dd302072ab726e17c86e1b47fa2");
         nZone = 0;
         SetZone(nZone);
 
@@ -156,7 +156,7 @@ public:
         genesis.nNonce = 0;
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x4AC58EB64F596BAC472C2FB53D763E8D507FA6AE4544A882BA7184E39BD075C569743C4B34000DB2"));
+        assert(hashGenesisBlock == uint320("0x54A49F793B3499C78147CB82A4BAF7ECA25B6A72438D0301DBB3ED071C83ED4250A0E42A56515828"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -207,7 +207,7 @@ public:
         SetZone(nZone);
 
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0xB2E80927339EF4A58CEC0A9A635636FABB2BF7294713ACACB7FD8CA262B120FD8C6C2B9C97BA615A"));
+        assert(hashGenesisBlock == uint320("0xEE677235C03E2700B8801B5B006939DFF47578CB0D14C8EE9EB6D584C4A370E56CC648A19F227F73"));
         vSeeds.clear();  // Regtest mode doesn't have any DNS seeds.
     }
 

@@ -14,6 +14,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/filesystem/operations.hpp>
 #include "json/json_spirit_value.h"
 
 using namespace json_spirit;
@@ -359,10 +360,21 @@ Value dumpwallet(const Array& params, bool fHelp)
 
     EnsureWalletIsUnlocked();
 
+    boost::filesystem::path filepath = params[0].get_str();
+    filepath = boost::filesystem::absolute(filepath);
+
+    /* Prevent arbitrary files from being overwritten. 
+     * It may also avoid other security issues.
+     */
+    if (boost::filesystem::exists(filepath)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, filepath.string() + " already exists. If you are sure this is what you want, move it out of the way first");
+    }
+
     ofstream file;
     file.open(params[0].get_str().c_str());
-    if (!file.is_open())
+    if (!file.is_open()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot open wallet dump file");
+    }
 
     std::map<CKeyID, int64_t> mapKeyBirth;
     std::set<CKeyID> setKeyPool;

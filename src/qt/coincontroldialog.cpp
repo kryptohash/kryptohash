@@ -552,14 +552,14 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 
         if (nPayAmount > 0) {
             nChange = nAmount - nPayAmount - nPayFee;
-
+#if 0
             // Superman III rule. 
-            // Change amount that is less than 1 CENT gets absorbed into nFlatFee.
-            if (nChange > 0 && nChange < CENT) {
+            // Change amount that is less than one hundredth of a CENT get absorbed into nPayFee.
+            if (nChange > 0 && nChange < CENTCENT) {
                 nPayFee += nChange;
                 nChange = 0;
             }
-
+#endif
             if (nChange == 0) {
                 nBytes -= 34;
             }
