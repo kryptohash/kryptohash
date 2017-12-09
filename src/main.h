@@ -188,7 +188,7 @@ bool ActivateBestChain(CValidationState &state);
 int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees);
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock);
 unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fFeedPID = false);
-void InitPIDstate(void);
+//void InitPIDstate(void);
 void UpdateTime(CBlockHeader& block, const CBlockIndex* pindexPrev);
 void UpdateTxTime(CBlockHeader& block, const CBlockIndex* pindexPrev);
 void UpdateTimeElapsed(CBlockHeader& block, const CBlockIndex* pindexPrev);
@@ -869,7 +869,7 @@ public:
         const CBlockIndex* pindex = this;
         for (int i = 0; i < nMedianTimeSpan && pindex; i++, pindex = pindex->pprev)
         {
-            *(--pbegin) = pindex->GetBlockTxTime();
+            *(--pbegin) = pindex->GetBlockTime();
         }
         std::sort(pbegin, pend);
         return pbegin[(pend - pbegin) / 2];

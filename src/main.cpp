@@ -75,9 +75,10 @@ map<uint320, set<uint320> > mapOrphanTransactionsByPrev;
 void EraseOrphansFor(NodeId peer);
 
 static const int64_t nTargetTimespan = 24 * 60 * 60; // 1 day
-static const int64_t nTargetSpacing = 5 * 60; // 5 minutes
+static const int64_t nTargetSpacing = 6 * 60; // 6 minutes
 static const int64_t nInterval = nTargetTimespan / nTargetSpacing;
 
+#if 0
 // PID controller constants
 const float PIDsetpoint     = (float)nTargetSpacing;
 const float PIDproportional = 1.000f;
@@ -86,6 +87,7 @@ const float PIDderivative   = 0.100f;
 
 CPID PIDctrl;
 map<int64_t, CPID> mapPID;
+#endif
 
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
@@ -1294,13 +1296,13 @@ int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees)
 unsigned int ComputeMinWork(unsigned int nBase, int64_t nTime)
 {
     const CBigNum &bnLimit = Params().ProofOfWorkLimit();
-#if 0
+
     // Testnet has min-difficulty blocks
     // after 2*nTargetSpacing time between blocks:
-    if (TestNet() && nTime > 2 * nTargetSpacing * 1000) {
+    if (TestNet() && nTime > 2 * nTargetSpacing) {
         return bnLimit.GetCompact();
     }
-#endif
+
     CBigNum bnResult;
     bnResult.SetCompact(nBase);
     while (nTime > 0 && bnResult < bnLimit)
@@ -1331,7 +1333,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
             // Special difficulty rule for testnet:
             // If the new block's timestamp is more than 2 * nTargetSpacing minutes
             // then allow mining of a min-difficulty block.
-            if (pblock->nTxTime > pindexLast->nTxTime + 2 * nTargetSpacing * 1000) {
+            if (pblock->nTime > pindexLast->nTime + 2 * nTargetSpacing) {
                 return nProofOfWorkLimit;
             }
             else {
@@ -1347,30 +1349,30 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         return pindexLast->nBits;
     }
 
+    // This fixes an issue where a 51% attack can change difficulty at will.
+    // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
+    int64_t blockstogoback = nInterval - 1;
+    if ((pindexLast->nHeight + 1) != nInterval) {
+        blockstogoback = nInterval;
+    }
+
     // Go back by what we want to be 1 day worth of blocks
     const CBlockIndex* pindexFirst = pindexLast;
-    for (int i = 0; pindexFirst && i < nInterval - 1; i++) {
+    for (int64_t i = 0; pindexFirst && i < blockstogoback; i++) {
         pindexFirst = pindexFirst->pprev;
     }
     assert(pindexFirst);
 
     // Limit adjustment step
-    int64_t nActualTimespan = pindexLast->GetBlockTxTime() - pindexFirst->GetBlockTxTime();
+    int64_t nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     LogPrintf("  nActualTimespan = %d  before bounds\n", nActualTimespan);
-#if 0
-    if (nActualTimespan < nTargetTimespan/4)
-        nActualTimespan = nTargetTimespan/4;
-    if (nActualTimespan > nTargetTimespan*4)
-        nActualTimespan = nTargetTimespan*4;
-#else
-    nActualTimespan = nTargetTimespan + (nActualTimespan - nTargetTimespan) / 8;
-    if (nActualTimespan < (nTargetTimespan - (nTargetTimespan / 4))) {
-        nActualTimespan = (nTargetTimespan - (nTargetTimespan / 4));
+
+    if (nActualTimespan < nTargetTimespan / 4) {
+        nActualTimespan = nTargetTimespan / 4;
     }
-    if (nActualTimespan > (nTargetTimespan + (nTargetTimespan / 2))) {
-        nActualTimespan = (nTargetTimespan + (nTargetTimespan / 2));
+    if (nActualTimespan > nTargetTimespan * 4) {
+        nActualTimespan = nTargetTimespan * 4;
     }
-#endif
 
     // Retarget
     CBigNum bnNew;
@@ -1391,7 +1393,100 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     return bnNew.GetCompact();
 }
 
+#if 0
 
+unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlockHeader *pblock) 
+{
+    /* current difficulty formula, darkcoin - DarkGravity v3, written by Evan Duffield - evan@darkcoin.io */
+    const CBlockIndex *BlockLastSolved = pindexLast;
+    const CBlockIndex *BlockReading = pindexLast;
+    const CBlockHeader *BlockCreating = pblock;
+    BlockCreating = BlockCreating;
+    int64_t nActualTimespan = 0;
+    int64_t LastBlockTime = 0;
+    int64_t PastBlocksMin = 240;
+    int64_t PastBlocksMax = 240;
+    int64_t CountBlocks = 0;
+    CBigNum PastDifficultyAverage;
+    CBigNum PastDifficultyAveragePrev;
+    const CBigNum &bnProofOfWorkLimit = Params().ProofOfWorkLimit();
+
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) {
+        // This is the first block or the height is < PastBlocksMin
+        // Return minimal required work. (250fffff)
+        return bnProofOfWorkLimit.GetCompact(); 
+    }
+
+    // loop over the past n blocks, where n == PastBlocksMax
+    for (int64_t i = 1; BlockReading && BlockReading->nHeight > 0; i++) 
+    {
+        if (PastBlocksMax > 0 && i > PastBlocksMax) { 
+            break; 
+        }
+        CountBlocks++;
+
+        // Calculate average difficulty based on the blocks we iterate over in this for loop
+        if(CountBlocks <= PastBlocksMin) {
+            if (CountBlocks == 1) {
+                PastDifficultyAverage.SetCompact(BlockReading->nBits);
+            }
+            else {
+                PastDifficultyAverage = ((PastDifficultyAveragePrev * CountBlocks) + (CBigNum().SetCompact(BlockReading->nBits))) / (CountBlocks + 1);
+            }
+            PastDifficultyAveragePrev = PastDifficultyAverage;
+        }
+
+        // If this is the second iteration (LastBlockTime was set)
+        if(LastBlockTime > 0) {
+            // Calculate time difference between previous block and current block
+            int64_t Diff = (LastBlockTime - BlockReading->GetBlockTime());
+            // Increment the actual timespan
+            nActualTimespan += Diff;
+        }
+        // Set LasBlockTime to the block time for the block in current iteration
+        LastBlockTime = BlockReading->GetBlockTime();      
+
+        if (BlockReading->pprev == NULL) {
+            assert(BlockReading);
+            break;
+        }
+        BlockReading = BlockReading->pprev;
+    }
+
+    // bnNew is the difficulty
+    CBigNum bnNew(PastDifficultyAverage);
+
+    // nTargetedTimespan is the time that the CountBlocks should have taken to be generated.
+    int64_t nTargetedTimespan = CountBlocks * nTargetSpacing;
+
+    // Limit the re-adjustment to 4x when increasing diff and 3x when decreasing diff
+    if (nActualTimespan < nTargetedTimespan / 4)
+        nActualTimespan = nTargetedTimespan / 4;
+    if (nActualTimespan > nTargetedTimespan * 3)
+        nActualTimespan = nTargetedTimespan * 3;
+
+    // Calculate the new difficulty based on actual and target timespan.
+    bnNew *= nActualTimespan;
+    bnNew /= nTargetedTimespan;
+
+    // If calculated difficulty is lower than the minimal diff, set the new difficulty to be the minimal diff.
+    if (bnNew > bnProofOfWorkLimit){
+        bnNew = bnProofOfWorkLimit;
+    }
+
+    // Some logging.
+    // TODO: only display these log messages for a certain debug option.
+    LogPrintf("Difficulty Retarget - Dark Gravity Wave 3\n");
+    LogPrintf("Before: %08x %s\n", BlockLastSolved->nBits, CBigNum().SetCompact(BlockLastSolved->nBits).getuint256().ToString().c_str());
+    LogPrintf("After: %08x %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
+
+    // Return the new diff.
+    return bnNew.GetCompact();
+}
+
+#endif
+
+#if 0
 //
 // minimum amount of work that could possibly be required at nTxTime
 //
@@ -1586,6 +1681,7 @@ bool GetHardCodedParamsTestNet(const int64_t currHeight, const uint32_t nRetarge
 
 	return true;
 }
+#endif
 
 int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fFilterOutliers, bool fNoZeroAverage)
 {
@@ -1664,6 +1760,7 @@ int64_t GetMeanTime(const CBlockIndex* pindexLast, uint32_t nAverageCnt, bool fF
     return nAverage;
 }
 
+#if 0
 unsigned int GetNextWorkRequiredPID(const CBlockIndex* pindexLast, const CBlockHeader *pblock, bool fFeedPID)
 {
     // Genesis block
@@ -1950,6 +2047,7 @@ void InitPIDstate(void)
     LogPrintf("InitPIDstate done at Height: %u\n", nHeight);
     PIDctrl.print();
 }
+#endif
 
 bool CheckProofOfWork(uint320 hash, unsigned int nBits)
 {
@@ -3165,7 +3263,11 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CDiskBlockPos* dbp)
             }
         }
         // Check proof of work
+#if 1
+        uint32_t nRequiredDiff = GetNextWorkRequired(pindexPrev, &block);
+#else
 		uint32_t nRequiredDiff = GetNextWorkRequiredPID(pindexPrev, &block, true);
+#endif
 		if (block.nBits != nRequiredDiff)
         {
             return state.DoS(100, error("AcceptBlock() : incorrect proof of work"), REJECT_INVALID, "bad-diffbits");
@@ -3268,7 +3370,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
     if (pcheckpoint && pblock->hashPrevBlock != (chainActive.Tip() ? chainActive.Tip()->GetBlockHash() : uint320(0))) {
         // Extra checks to prevent "fill up memory by spamming with bogus blocks"
-        int64_t deltaTime = pblock->GetBlockTxTime() + nTargetTimespan*1000 - pcheckpoint->nTxTime; // Allow extra 24 hours since last checkpoint.
+        int64_t deltaTime = pblock->GetBlockTime() + nTargetTimespan - pcheckpoint->nTime; // Allow extra 24 hours since last checkpoint.
         if (deltaTime < 0) {
             return state.DoS(100, error("ProcessBlock() : block with timestamp before last checkpoint"), REJECT_CHECKPOINT, "time-too-old");
         }

@@ -332,7 +332,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         pblock->nTxTime = minTxTime;
         // nTime is the difference between current time and the oldest nTxTime in the mempool.
         pblock->nTime = currTime - minTxTime;
-#if 0
+#if 1
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock);
 #else
         pblock->nBits   = GetNextWorkRequiredPID(pindexPrev, pblock);

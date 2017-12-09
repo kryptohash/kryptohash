@@ -1082,8 +1082,11 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (!ActivateBestChain(state)) {
         strErrors << "Failed to connect best block";
     }
+
+#if 0
     // Init PID controller
     InitPIDstate();
+#endif
 
     std::vector<boost::filesystem::path> vImportFiles;
     if (mapArgs.count("-loadblock")) {
