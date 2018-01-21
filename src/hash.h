@@ -21,9 +21,9 @@
 #ifdef USE_SHA3
 #include "keccak/sha3.h"
 
-#define SHAKE320_L         (320)  // Length in bits
-#define KPOW_MUL           (546)  // How many Keccak blocks the PoW contains
-#define KRATE              (SHAKE320_R / 8)  // Keccak rate in bytes
+#define SHAKE320_L         (320)               // Length in bits
+#define KPOW_MUL           (1092)              // How many Keccak blocks the PoW contains
+#define KRATE              (SHAKE320_R / 8)    // Keccak rate in bytes
 #define KPROOF_OF_WORK_SZ  (KRATE * KPOW_MUL)  // KryptoHash PoW Size in bytes. It must be a multiple of Keccak Rate.
 
 class CHashWriter

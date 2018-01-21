@@ -253,17 +253,17 @@ uint64_t CTxOutCompressor::DecompressAmount(uint64_t x)
 
 uint256 CBlockHeader::GetHash256() const
 {
-    return Hash256(BEGIN(nVersion), END(padding));
+    return Hash256(BEGIN(nVersion), END(nNonce));
 }
 
 uint320 CBlockHeader::GetHash() const
 {
-    return Hash(BEGIN(nVersion), END(padding));
+    return Hash(BEGIN(nVersion), END(nNonce));
 }
 
 uint320 CBlockHeader::GetKryptoHash() const
 {
-    return KSHAKE320(BEGIN(nVersion), END(padding));
+    return KSHAKE320(BEGIN(nVersion), END(nNonce));
 }
 
 uint320 CBlock::BuildMerkleTree() const
@@ -323,9 +323,10 @@ uint320 CBlock::CheckMerkleBranch(uint320 hash, const std::vector<uint320>& vMer
 
 void CBlock::print() const
 {
-    LogPrintf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTxTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
+    LogPrintf("CBlock(hash=%s, ver=%d, zonesMask=%s, hashPrevBlock=%s, hashMerkleRoot=%s, nTxTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
                 GetHash().ToString(),
                 nVersion,
+                nZonesMask.ToString(),
                 hashPrevBlock.ToString(),
                 hashMerkleRoot.ToString(),
                 nTxTime, nBits, nNonce,

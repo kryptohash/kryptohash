@@ -62,7 +62,7 @@ public:
     const vector<unsigned char>& GenesisPubKey() const { return vGenesisAddr; }
     const vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
-    int16_t GetZone() const { return nZone; }
+    uint8_t GetZone() const { return nZone; }
     uint64_t GetSideChainMask() const { return nSideChainMask; }
     const CBigNum& ProofOfWorkLimit() const { return bnProofOfWorkLimit; }
     int Subsidy() const { return nSubsidyHalvingInterval; }
@@ -80,27 +80,28 @@ public:
 protected:
     CChainParams() {}
 
-    void SetZone(int nZoneIn) const {
+    void SetZone(uint8_t nZoneIn) const {
+        string strData;
         nZone = nZoneIn % MAX_NUM_OF_ZONES;
         if (NetworkID() == CChainParams::TESTNET) {
             nDefaultPort = P2P_PORT_TESTNET(nZoneIn);
             nRPCPort = RPC_PORT_TESTNET(nZoneIn);
-            strDataDir = "testnet";
+            strData = "testnet";
         }
         else if (NetworkID() == CChainParams::REGTEST) {
             nDefaultPort = P2P_PORT_REGRESSION;
             nRPCPort = RPC_PORT_TESTNET(nZoneIn);
-            strDataDir = "regtest";
+            strData = "regtest";
         }
         else {
             nDefaultPort = P2P_PORT(nZoneIn);
             nRPCPort = RPC_PORT(nZoneIn);
-            strDataDir = "zone";
+            strData = "zone";
         }
-        strDataDir += boost::lexical_cast<std::string>(nZone);
+        strDataDir = strData + to_string(nZone);
     }
 
-    mutable int16_t nZone;
+    mutable uint8_t nZone;
     mutable int nDefaultPort;
     mutable int nRPCPort;
     mutable string strDataDir;

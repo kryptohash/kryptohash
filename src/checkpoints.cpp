@@ -171,6 +171,7 @@ namespace Checkpoints
     }
 }
 
+#if 0 // To be removed
 namespace PIDCheckpoints
 {
     typedef std::map<int64_t, CPID> MapPIDCheckpoints;
@@ -269,3 +270,4 @@ namespace PIDCheckpoints
     }
 
 }
+#endif

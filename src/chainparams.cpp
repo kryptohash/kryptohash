@@ -35,7 +35,7 @@ public:
         SetZone(nZone);
 
         bnProofOfWorkLimit = CBigNum(~uint320(0) >> 28);
-		nSubsidyHalvingInterval = 210000;
+		nSubsidyHalvingInterval = 10000;
 
         // Build the genesis block.
         const char* pszTimestamp = "The New York Times 11/27/2017: As Bitcoin Scrapes $10,000, an Investment Boom Like No Other";
@@ -51,9 +51,10 @@ public:
         genesis.hashPrevBlock = 0;
         genesis.hashMerkleRoot = genesis.BuildMerkleTree();
         //std::cout << genesis.hashMerkleRoot.GetHex() << std::endl;
-        assert(genesis.hashMerkleRoot == uint320("0x5839320DCB97EDC2227B0019E6C164571F1B927DF3B5AC7E0EE33953BEDEE9929E9BCE2ABE831DB8"));
+        assert(genesis.hashMerkleRoot == uint320("0x440763751CCC965CC1E09A361DC2F2D0C0EBE466B1AAB3F58D55E69B0A10C8114F1D6E4A1C8515EF"));
         genesisMerkleRoot = genesis.hashMerkleRoot;
-        genesis.nVersion = 1 | (nZone << 16);
+        genesis.nVersion = 1;
+        genesis.nZonesMask = 0;
         genesis.nTxTime  = txNew.nTxTime;
         genesis.nBits    = 0x2900FFFF;
         genesis.nTime    = 300000; // Hardcoded to 5 minutes after genesis.
@@ -61,7 +62,7 @@ public:
 
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x5FEED38FFEF7AC5903F62BDE8E80CC79B04D0FF289BA68528F0224691F49E36540E4710BCDED5DA9"));
+        assert(hashGenesisBlock == uint320("0x075543352BAAB2752038B2B3C1BD2E696F791FA4CDB0025EE877548E7F50A3D75DD90CF6AEC385CB"));
 
         vSeeds.push_back(CDNSSeedData("seed0.kryptohash.com", "seed0.kryptohash.com"));
         vSeeds.push_back(CDNSSeedData("seed1.kryptohash.com", "seed1.kryptohash.com"));
@@ -156,7 +157,7 @@ public:
         genesis.nNonce = 0;
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0x54A49F793B3499C78147CB82A4BAF7ECA25B6A72438D0301DBB3ED071C83ED4250A0E42A56515828"));
+        assert(hashGenesisBlock == uint320("0xFAA42CDFE042A854C7A009BE75D7649DA268C17E2C30FAA7CCB8A28DEA5D715423ACAA2CBCF42B03"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -207,7 +208,7 @@ public:
         SetZone(nZone);
 
         //std::cout << hashGenesisBlock.GetHex() << std::endl;
-        assert(hashGenesisBlock == uint320("0xEE677235C03E2700B8801B5B006939DFF47578CB0D14C8EE9EB6D584C4A370E56CC648A19F227F73"));
+        assert(hashGenesisBlock == uint320("0xF80EEC1D59DCD0C90D3835FB28BB6BD6D8A1ACAB6C19BCFBC640EA21B5C80F2815D4C1D67EB86D21"));
         vSeeds.clear();  // Regtest mode doesn't have any DNS seeds.
     }
 

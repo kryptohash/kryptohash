@@ -733,6 +733,7 @@ public:
 
     // block header
     int  nVersion;
+    uint128  nZonesMask;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
     uint32_t nBits;
@@ -816,6 +817,7 @@ public:
     {
         CBlockHeader block;
         block.nVersion       = nVersion;
+        block.nZonesMask     = nZonesMask;
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
@@ -823,7 +825,6 @@ public:
         block.nBits          = nBits;
         block.nTime          = nTime;
         block.nNonce         = nNonce;
-        memset(block.padding, 0, sizeof(padding));
         return block;
     }
 
@@ -1170,6 +1171,7 @@ protected:
 };
 
 
+#if 0  // To be removed
 class CPIDcontroller {
 protected:
     float SumError;     // Sums of Errors
@@ -1376,5 +1378,6 @@ public:
         LogPrintf("%s\n", ToString().c_str());
     }
 };
+#endif
 
 #endif

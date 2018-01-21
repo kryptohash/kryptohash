@@ -37,7 +37,7 @@ namespace Genesis
             return mapGenesisRegtest;
     }
 
-    bool GetGenesisData(int nZone, CGenesis& data)
+    bool GetGenesisData(uint8_t nZone, CGenesis& data)
     {
         const MapGenesis& genesis = Genesis();
 

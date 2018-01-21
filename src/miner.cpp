@@ -381,13 +381,13 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
         struct unnamed2
         {
             int      nVersion;          //  4 bytes
+            uint128  nZonesMask[16];    // 16 bytes
             uint320  hashPrevBlock;     // 40 bytes
             uint320  hashMerkleRoot;    // 40 bytes
             uint32_t nBits;             //  4 bytes
             int64_t  nTxTime;           //  8 bytes
             uint32_t nTime;             //  4 bytes
             uint32_t nNonce;            //  4 bytes
-            uint8_t  pchHeaderPad[16];  // 16 bytes
         } block;                        //120 bytes
         unsigned char pchPadding[72];
     } tmp;

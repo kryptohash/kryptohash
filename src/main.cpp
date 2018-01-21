@@ -74,7 +74,7 @@ map<uint320, COrphanTx> mapOrphanTransactions;
 map<uint320, set<uint320> > mapOrphanTransactionsByPrev;
 void EraseOrphansFor(NodeId peer);
 
-static const int64_t nTargetTimespan = 24 * 60 * 60; // 1 day
+static const int64_t nTargetTimespan = 5 * 24 * 60 * 60; // 5 days
 static const int64_t nTargetSpacing = 6 * 60; // 6 minutes
 static const int64_t nInterval = nTargetTimespan / nTargetSpacing;
 
@@ -1281,8 +1281,8 @@ int64_t GetBlockSubsidy(int64_t nHeight, const int64_t nFees)
 	int64_t nSubsidy = 50 * COIN;
 	// Subsidy is cut in half every 210,000 blocks which will occur approximately every 2 years.
 	nSubsidy >>= halvings;
-	// Subsidy ends once the amount drops below one Cent.
-	if (nSubsidy < CENT)
+	// Subsidy ends once the amount drops below one Cent of a Cent.
+	if (nSubsidy < CENTCENT)
 		nSubsidy = 0;
 
 	return nSubsidy + nFees;
@@ -1393,100 +1393,8 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     return bnNew.GetCompact();
 }
 
-#if 0
 
-unsigned int static DarkGravityWave3(const CBlockIndex* pindexLast, const CBlockHeader *pblock) 
-{
-    /* current difficulty formula, darkcoin - DarkGravity v3, written by Evan Duffield - evan@darkcoin.io */
-    const CBlockIndex *BlockLastSolved = pindexLast;
-    const CBlockIndex *BlockReading = pindexLast;
-    const CBlockHeader *BlockCreating = pblock;
-    BlockCreating = BlockCreating;
-    int64_t nActualTimespan = 0;
-    int64_t LastBlockTime = 0;
-    int64_t PastBlocksMin = 240;
-    int64_t PastBlocksMax = 240;
-    int64_t CountBlocks = 0;
-    CBigNum PastDifficultyAverage;
-    CBigNum PastDifficultyAveragePrev;
-    const CBigNum &bnProofOfWorkLimit = Params().ProofOfWorkLimit();
-
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || BlockLastSolved->nHeight < PastBlocksMin) {
-        // This is the first block or the height is < PastBlocksMin
-        // Return minimal required work. (250fffff)
-        return bnProofOfWorkLimit.GetCompact(); 
-    }
-
-    // loop over the past n blocks, where n == PastBlocksMax
-    for (int64_t i = 1; BlockReading && BlockReading->nHeight > 0; i++) 
-    {
-        if (PastBlocksMax > 0 && i > PastBlocksMax) { 
-            break; 
-        }
-        CountBlocks++;
-
-        // Calculate average difficulty based on the blocks we iterate over in this for loop
-        if(CountBlocks <= PastBlocksMin) {
-            if (CountBlocks == 1) {
-                PastDifficultyAverage.SetCompact(BlockReading->nBits);
-            }
-            else {
-                PastDifficultyAverage = ((PastDifficultyAveragePrev * CountBlocks) + (CBigNum().SetCompact(BlockReading->nBits))) / (CountBlocks + 1);
-            }
-            PastDifficultyAveragePrev = PastDifficultyAverage;
-        }
-
-        // If this is the second iteration (LastBlockTime was set)
-        if(LastBlockTime > 0) {
-            // Calculate time difference between previous block and current block
-            int64_t Diff = (LastBlockTime - BlockReading->GetBlockTime());
-            // Increment the actual timespan
-            nActualTimespan += Diff;
-        }
-        // Set LasBlockTime to the block time for the block in current iteration
-        LastBlockTime = BlockReading->GetBlockTime();      
-
-        if (BlockReading->pprev == NULL) {
-            assert(BlockReading);
-            break;
-        }
-        BlockReading = BlockReading->pprev;
-    }
-
-    // bnNew is the difficulty
-    CBigNum bnNew(PastDifficultyAverage);
-
-    // nTargetedTimespan is the time that the CountBlocks should have taken to be generated.
-    int64_t nTargetedTimespan = CountBlocks * nTargetSpacing;
-
-    // Limit the re-adjustment to 4x when increasing diff and 3x when decreasing diff
-    if (nActualTimespan < nTargetedTimespan / 4)
-        nActualTimespan = nTargetedTimespan / 4;
-    if (nActualTimespan > nTargetedTimespan * 3)
-        nActualTimespan = nTargetedTimespan * 3;
-
-    // Calculate the new difficulty based on actual and target timespan.
-    bnNew *= nActualTimespan;
-    bnNew /= nTargetedTimespan;
-
-    // If calculated difficulty is lower than the minimal diff, set the new difficulty to be the minimal diff.
-    if (bnNew > bnProofOfWorkLimit){
-        bnNew = bnProofOfWorkLimit;
-    }
-
-    // Some logging.
-    // TODO: only display these log messages for a certain debug option.
-    LogPrintf("Difficulty Retarget - Dark Gravity Wave 3\n");
-    LogPrintf("Before: %08x %s\n", BlockLastSolved->nBits, CBigNum().SetCompact(BlockLastSolved->nBits).getuint256().ToString().c_str());
-    LogPrintf("After: %08x %s\n", bnNew.GetCompact(), bnNew.getuint256().ToString().c_str());
-
-    // Return the new diff.
-    return bnNew.GetCompact();
-}
-
-#endif
-
-#if 0
+#if 0 // To be removed
 //
 // minimum amount of work that could possibly be required at nTxTime
 //

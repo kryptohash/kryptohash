@@ -40,7 +40,7 @@ namespace Genesis
 {
 
     // Returns true if zone contains a genesis block
-    bool GetGenesisData(int nZone, CGenesis& data);
+    bool GetGenesisData(uint8_t nZone, CGenesis& data);
 
 }
 

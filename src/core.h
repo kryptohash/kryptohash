@@ -17,7 +17,8 @@
 class CTransaction;
 
 /* No transaction larger than this (in Kryptohash-toshi) is valid */
-static const int64_t MAX_MONEY = 20999958840000;
+static const int64_t MAX_MONEY = 12800000000000000;
+              // BTC Max Money = 2100000000000000
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 
 // flat fee per transaction value
@@ -220,7 +221,8 @@ public:
     std::vector<CTxOut> vout;
     int64_t nTxTime;
     int64_t nLockTime;
-
+    // Current zone
+    mutable uint8_t nZone;
     // Denial-of-service detection:
     mutable int nDoS;
 
@@ -241,7 +243,8 @@ public:
 
     void SetNull()
     {
-        nVersion = CTransaction::CURRENT_VERSION;
+        nZone = Params().GetZone();
+        nVersion = CTransaction::CURRENT_VERSION | (nZone << 16);
         vin.clear();
         vout.clear();
         nTxTime = 0;
@@ -425,15 +428,17 @@ class CBlockHeader
 {
 public:
     // header
-    static const int CURRENT_VERSION=1;
-    int  nVersion;
+    static const int CURRENT_VERSION = 1;
+
+    int      nVersion;
+    uint128  nZonesMask;
     uint320  hashPrevBlock;
     uint320  hashMerkleRoot;
     uint32_t nBits;
     int64_t  nTxTime;
     uint32_t nTime;
     uint32_t nNonce;
-    uint8_t  padding[16];
+
     mutable uint8_t nZone;
 
     CBlockHeader()
@@ -445,6 +450,7 @@ public:
     (
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
+        READWRITE(nZonesMask);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nBits);
@@ -456,14 +462,13 @@ public:
     void SetNull()
     {
         nZone = Params().GetZone();
-        nVersion = CBlockHeader::CURRENT_VERSION | (nZone << 16);
+        nZonesMask = (nZone > 0) ? (1 << nZone) : 0;
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
         nBits = 0;
         nTxTime = 0;
         nTime = 0;
         nNonce = 0;
-        memset(padding, 0, sizeof(padding));
     }
 
     bool IsNull() const
