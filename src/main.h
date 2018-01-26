@@ -118,7 +118,6 @@ extern unsigned int nCoinCacheSize;
 // Minimum disk space required - used in CheckDiskSpace()
 static const uint64_t nMinDiskSpace = 52428800;
 
-
 class CCoinsDB;
 class CBlockTreeDB;
 struct CDiskBlockPos;
@@ -435,10 +434,13 @@ public:
     }
 };
 
+#if 1
 /** A transaction with a merkle branch linking it to the block chain. */
 class CMerkleTx : public CTransaction
 {
 private:
+    /** Constant used in hashBlock to indicate tx has been abandoned */
+    static const uint320 ABANDON_HASH;
     int64_t GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const;
 public:
     uint320 hashBlock;
@@ -476,20 +478,101 @@ public:
         READWRITE(nIndex);
     )
 
-
     int64_t SetMerkleBranch(const CBlock* pblock = NULL);
+    void SetMerkleBranch(const CBlockIndex* pIndex, int posInBlock);
 
     // Return depth of transaction in blockchain:
     // -1  : not in blockchain, and not in memory pool (conflicted transaction)
     //  0  : in memory pool, waiting to be included in a block
     // >=1 : this many blocks deep in the main chain
-    int GetDepthInMainChain(CBlockIndex* &pindexRet) const;
-    int GetDepthInMainChain() const { CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
-    bool IsInMainChain() const { CBlockIndex *pindexRet; return GetDepthInMainChainINTERNAL(pindexRet) > 0; }
+    //int GetDepthInMainChain(CBlockIndex* &pindexRet) const;
+    int GetDepthInMainChain(const CBlockIndex* &pindexRet) const;
+    // int GetDepthInMainChain() const { CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
+    int GetDepthInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
+    // bool IsInMainChain() const { CBlockIndex *pindexRet; return GetDepthInMainChainINTERNAL(pindexRet) > 0; }
+    bool IsInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet) > 0; }
     int GetBlocksToMaturity() const;
     bool AcceptToMemoryPool(bool fLimitFree=true);
+    bool hashUnset() const { return (hashBlock.IsNull() || hashBlock == ABANDON_HASH); }
+};
+#else
+/** A transaction with a merkle branch linking it to the block chain. */
+class CMerkleTx
+{
+private:
+    /** Constant used in hashBlock to indicate tx has been abandoned */
+    static const uint320 ABANDON_HASH;
+
+public:
+    CTransactionRef tx;
+    uint320 hashBlock;
+    std::vector<uint320> vMerkleBranch;
+
+    /* An nIndex == -1 means that hashBlock (in nonzero) refers to the earliest
+    * block in the chain we know this or any in-wallet dependency conflicts
+    * with. Older clients interpret nIndex == -1 as unconfirmed for backward
+    * compatibility.
+    */
+    int nIndex;
+
+    CMerkleTx()
+    {
+        SetTx(MakeTransactionRef());
+        Init();
+    }
+
+    CMerkleTx(CTransactionRef arg)
+    {
+        SetTx(std::move(arg));
+        Init();
+    }
+
+    /** Helper conversion operator to allow passing CMerkleTx where CTransaction is expected.
+    *  TODO: adapt callers and remove this operator. */
+    operator const CTransaction&() const { return *tx; }
+
+    void Init()
+    {
+        hashBlock = uint320();
+        nIndex = -1;
+    }
+
+    void SetTx(CTransactionRef arg)
+    {
+        tx = std::move(arg);
+    }
+
+    IMPLEMENT_SERIALIZE (
+        READWRITE(tx);
+        READWRITE(hashBlock);
+        READWRITE(vMerkleBranch);
+        READWRITE(nIndex);
+    )
+
+    void SetMerkleBranch(const CBlockIndex* pIndex, int posInBlock);
+
+    /**
+    * Return depth of transaction in blockchain:
+    * <0  : conflicts with a transaction this deep in the blockchain
+    *  0  : in memory pool, waiting to be included in a block
+    * >=1 : this many blocks deep in the main chain
+    */
+    int GetDepthInMainChain(const CBlockIndex* &pindexRet) const;
+    int GetDepthInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet); }
+    bool IsInMainChain() const { const CBlockIndex *pindexRet; return GetDepthInMainChain(pindexRet) > 0; }
+    int GetBlocksToMaturity() const;
+    /** Pass this transaction to the mempool. Fails if absolute fee exceeds absurd fee. */
+//    bool AcceptToMemoryPool(const int64_t nAbsurdFee, CValidationState& state);
+    bool AcceptToMemoryPool(bool fLimitFree = true);
+    bool hashUnset() const { return (hashBlock.IsNull() || hashBlock == ABANDON_HASH); }
+    bool isAbandoned() const { return (hashBlock == ABANDON_HASH); }
+    void setAbandoned() { hashBlock = ABANDON_HASH; }
+
+    const uint320& GetHash() const { return tx->GetHash(); }
+    bool IsCoinBase() const { return tx->IsCoinBase(); }
 };
 
+#endif
 
 
 
@@ -732,14 +815,15 @@ public:
     unsigned int nStatus;
 
     // block header
-    int  nVersion;
-    uint128  nZonesMask;
+    int32_t  nVersion;
+    uint32_t nReserved;
     uint320  hashMerkleRoot;
     int64_t  nTxTime;
+    uint64_t maskZones;
     uint32_t nBits;
+    int32_t  nBlockSize;
     uint32_t nTime;
     uint32_t nNonce;
-    unsigned char padding[16];
 
     // (memory only) Zone number
     uint8_t  nZone;
@@ -763,12 +847,14 @@ public:
         nZone       = 0;
 
         nVersion       = 0;
+        nReserved      = 0;
         hashMerkleRoot = 0;
         nTxTime        = 0;
+        maskZones      = 0;
         nBits          = 0;
+        nBlockSize     = 0;
         nTime          = 0;
         nNonce         = 0;
-        memset(padding, 0, sizeof(padding));
     }
 
     CBlockIndex(CBlockHeader& block)
@@ -785,14 +871,16 @@ public:
         nStatus     = 0;
         nSequenceId = 0;
 
-        nZone           = block.nZone;
-        nVersion        = block.nVersion | (nZone << 16);
+        nVersion        = block.nVersion;
+        nReserved       = block.nReserved;
         hashMerkleRoot  = block.hashMerkleRoot;
         nTxTime         = block.nTxTime;
+        nZone           = block.nZone;
+        maskZones       = block.maskZones;
         nBits           = block.nBits;
+        nBlockSize      = block.nBlockSize;
         nTime           = block.nTime;
         nNonce          = block.nNonce;
-        memset(padding, 0, sizeof(padding));
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -817,12 +905,14 @@ public:
     {
         CBlockHeader block;
         block.nVersion       = nVersion;
-        block.nZonesMask     = nZonesMask;
+        block.nReserved      = nReserved;
         if (pprev)
             block.hashPrevBlock = pprev->GetBlockHash();
         block.hashMerkleRoot = hashMerkleRoot;
         block.nTxTime        = nTxTime;
+        block.maskZones      = maskZones;
         block.nBits          = nBits;
+        block.nBlockSize     = nBlockSize;
         block.nTime          = nTime;
         block.nNonce         = nNonce;
         return block;

@@ -21,6 +21,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "genesis.h"
+#include "merkle.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -954,7 +955,7 @@ bool AppInit2(boost::thread_group& threadGroup)
                 CBlockIndex* pindex = (*mi).second;
                 CBlock block;
                 ReadBlockFromDisk(block, pindex);
-                block.BuildMerkleTree();
+                BlockMerkleRoot(block); //block.BuildMerkleTree();
                 block.print();
                 LogPrintf("\n");
                 nFound++;

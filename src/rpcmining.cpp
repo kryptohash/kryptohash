@@ -10,6 +10,7 @@
 #include "net.h"
 #include "main.h"
 #include "miner.h"
+#include "merkle.h"
 #ifdef ENABLE_WALLET
 #include "db.h"
 #include "wallet.h"
@@ -387,18 +388,18 @@ Value getwork(const Array& params, bool fHelp)
         if (vchData.size() != 128) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");
         }
-        CBlock* pdata = (CBlock*)&vchData[0];
+        CBlock *pdata = (CBlock*)&vchData[0];
 
         // Get saved block
         if (!mapNewBlock.count(pdata->hashMerkleRoot)) {
             return false;
         }
-        CBlock* pblock = mapNewBlock[pdata->hashMerkleRoot].first;
+        CBlock *pblock = mapNewBlock[pdata->hashMerkleRoot].first;
 
         pblock->nTime = pdata->nTime;
         pblock->nNonce = pdata->nNonce;
         pblock->vtx[0].vin[0].scriptSig = mapNewBlock[pdata->hashMerkleRoot].second;
-        pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+        pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
 
         assert(pwalletMain != NULL);
         return CheckWork(pblock, *pwalletMain, *pMiningKey);

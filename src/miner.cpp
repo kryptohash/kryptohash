@@ -9,6 +9,7 @@
 #include "core.h"
 #include "main.h"
 #include "net.h"
+#include "merkle.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
@@ -353,7 +354,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
     return pblocktemplate.release();
 }
 
-void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
+void IncrementExtraNonce(CBlock *pblock, CBlockIndex *pindexPrev, unsigned int& nExtraNonce)
 {
     // Update nExtraNonce
     static uint320 hashPrevBlock;
@@ -367,7 +368,7 @@ void IncrementExtraNonce(CBlock* pblock, CBlockIndex* pindexPrev, unsigned int& 
     pblock->vtx[0].vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
     assert(pblock->vtx[0].vin[0].scriptSig.size() <= 100);
 
-    pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+    pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
 }
 
 void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance, char* pdata)
@@ -380,12 +381,14 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
     {
         struct unnamed2
         {
-            int      nVersion;          //  4 bytes
-            uint128  nZonesMask[16];    // 16 bytes
+            int32_t  nVersion;          //  4 bytes
+            uint32_t nReserved;         //  4 bytes
             uint320  hashPrevBlock;     // 40 bytes
             uint320  hashMerkleRoot;    // 40 bytes
-            uint32_t nBits;             //  4 bytes
             int64_t  nTxTime;           //  8 bytes
+            uint64_t maskZones;         //  8 bytes
+            uint32_t nBits;             //  4 bytes
+            int32_t  nBlockSize;        //  4 bytes 
             uint32_t nTime;             //  4 bytes
             uint32_t nNonce;            //  4 bytes
         } block;                        //120 bytes
@@ -395,19 +398,22 @@ void FormatKryptoHashBuffers(CBlock* pblock, Keccak_HashInstance *keccakInstance
 
     memset(&tmp, 0, sizeof(tmp));
 
-    tmp.block.nVersion        = pblock->nVersion | (pblock->nZone << 16);
+    tmp.block.nVersion        = pblock->nVersion;
+    tmp.block.nReserved       = pblock->nReserved;
     tmp.block.hashPrevBlock   = pblock->hashPrevBlock;
     tmp.block.hashMerkleRoot  = pblock->hashMerkleRoot;
     tmp.block.nTxTime         = pblock->nTxTime;
+    tmp.block.maskZones       = pblock->maskZones;
     tmp.block.nBits           = pblock->nBits;
+    tmp.block.nBlockSize      = pblock->nBlockSize;
     tmp.block.nTime           = pblock->nTime;
     tmp.block.nNonce          = pblock->nNonce;
 
     FormatHashBlocks(&tmp.block, sizeof(tmp.block));
 
     if (keccakInstance != NULL) {
-        // Precalc the first 96 bytes of the block header, which stays constant
-        Keccak_HashUpdate(keccakInstance, (BitSequence *)&tmp.block, 96 * 8);
+        // Precalc the first 112 bytes of the block header, which stays constant
+        Keccak_HashUpdate(keccakInstance, (BitSequence *)&tmp.block, 112 * 8);
     }
     memcpy(pdata, &tmp.block, sizeof(tmp.block));
 }

@@ -314,6 +314,11 @@ public:
     void print() const;
 };
 
+typedef std::shared_ptr<const CTransaction> CTransactionRef;
+static inline CTransactionRef MakeTransactionRef() { return std::make_shared<const CTransaction>(); }
+template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) { return std::make_shared<const CTransaction>(std::forward<Tx>(txIn)); }
+
+
 /** wrapper for CTxOut that provides a more compact serialization */
 class CTxOutCompressor
 {
@@ -430,12 +435,14 @@ public:
     // header
     static const int CURRENT_VERSION = 1;
 
-    int      nVersion;
-    uint128  nZonesMask;
+    int32_t  nVersion;
+    uint32_t nReserved;
     uint320  hashPrevBlock;
     uint320  hashMerkleRoot;
-    uint32_t nBits;
     int64_t  nTxTime;
+    uint64_t maskZones;
+    uint32_t nBits;
+    int32_t  nBlockSize;
     uint32_t nTime;
     uint32_t nNonce;
 
@@ -450,11 +457,13 @@ public:
     (
         READWRITE(this->nVersion);
         nVersion = this->nVersion;
-        READWRITE(nZonesMask);
+        READWRITE(nReserved);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        READWRITE(nBits);
         READWRITE(nTxTime);
+        READWRITE(maskZones);
+        READWRITE(nBits);
+        READWRITE(nBlockSize);
         READWRITE(nTime);
         READWRITE(nNonce);
     )
@@ -462,13 +471,15 @@ public:
     void SetNull()
     {
         nZone = Params().GetZone();
-        nZonesMask = (nZone > 0) ? (1 << nZone) : 0;
+        maskZones = (nZone > 0) ? (1 << nZone) : 0;
         hashPrevBlock = 0;
         hashMerkleRoot = 0;
         nBits = 0;
         nTxTime = 0;
         nTime = 0;
         nNonce = 0;
+        nReserved = 0;
+        nBlockSize = 0;
     }
 
     bool IsNull() const
@@ -569,7 +580,7 @@ public:
         return block;
     }
 
-    uint320 BuildMerkleTree() const;
+//    uint320 BuildMerkleTree() const;
 
     const uint320 &GetTxHash(unsigned int nIndex) const {
         assert(vMerkleTree.size() > 0); // BuildMerkleTree must have been called first
@@ -594,7 +605,7 @@ public:
     }
 
     std::vector<uint320> GetMerkleBranch(int nIndex) const;
-    static uint320 CheckMerkleBranch(uint320 hash, const std::vector<uint320>& vMerkleBranch, int nIndex);
+//    static uint320 CheckMerkleBranch(uint320 hash, const std::vector<uint320>& vMerkleBranch, int nIndex);
     void print() const;
     int64_t GetMaxTransactionTime() const;
     bool SignBlock(const CKeyStore& keystore);

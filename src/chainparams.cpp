@@ -9,6 +9,7 @@
 #include "core.h"
 #include "protocol.h"
 #include "util.h"
+#include "merkle.h"
 
 //
 // Main network
@@ -49,16 +50,18 @@ public:
         txNew.nTxTime = 0x15FFB35B590; // The millisecond when the Kryptohash Genesis block was created (UTC minus 1970/1/1 Epoch).
         genesis.vtx.push_back(txNew);
         genesis.hashPrevBlock = 0;
-        genesis.hashMerkleRoot = genesis.BuildMerkleTree();
-        //std::cout << genesis.hashMerkleRoot.GetHex() << std::endl;
+        genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+        std::cout << genesis.hashMerkleRoot.GetHex() << std::endl;
         assert(genesis.hashMerkleRoot == uint320("0x440763751CCC965CC1E09A361DC2F2D0C0EBE466B1AAB3F58D55E69B0A10C8114F1D6E4A1C8515EF"));
         genesisMerkleRoot = genesis.hashMerkleRoot;
-        genesis.nVersion = 1;
-        genesis.nZonesMask = 0;
-        genesis.nTxTime  = txNew.nTxTime;
-        genesis.nBits    = 0x2900FFFF;
-        genesis.nTime    = 300000; // Hardcoded to 5 minutes after genesis.
-        genesis.nNonce   = 0;
+        genesis.nVersion   = 1;
+        genesis.nReserved  = 0;
+        genesis.maskZones  = 0;
+        genesis.nTxTime    = txNew.nTxTime;
+        genesis.nBits      = 0x2900FFFF;
+        genesis.nBlockSize = 0;
+        genesis.nTime      = 300000; // Hardcoded to 5 minutes after genesis.
+        genesis.nNonce     = 0;
 
         hashGenesisBlock = genesis.GetKryptoHash();
         //std::cout << hashGenesisBlock.GetHex() << std::endl;

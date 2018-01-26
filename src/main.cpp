@@ -17,7 +17,9 @@
 #include "txmempool.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "merkle.h" 
 
+#include <unordered_map>
 #include <sstream>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -37,11 +39,18 @@ using namespace boost;
 // Global state
 //
 
+struct BlockHasher
+{
+    size_t operator()(const uint320& hash) const { return hash.GetLow64(); }
+};
+typedef std::unordered_map<uint320, CBlockIndex*, BlockHasher> BlockMap;
+
 CCriticalSection cs_main;
 
 CTxMemPool mempool;
 
 map<uint320, CBlockIndex*> mapBlockIndex;
+//BlockMap mapBlockIndex;
 CChain chainActive;
 CChain chainMostWork;
 int64_t nTimeBestReceived = 0;
@@ -57,6 +66,8 @@ unsigned int nCoinCacheSize = 5000;
 int64_t CTransaction::nMinTxFee = 100;  // Override with -mintxfee
 /** Fees smaller than this (in krytohash-toshi) are considered zero fee (for relaying and mining) */
 int64_t CTransaction::nMinRelayTxFee = 10;
+
+const uint320 CMerkleTx::ABANDON_HASH(uint320("00000000000000000000000000000000000000000000000000000000000000000000000000000001"));
 
 struct COrphanBlock {
     uint320 hashBlock;
@@ -768,7 +779,7 @@ int64_t CMerkleTx::SetMerkleBranch(const CBlock* pblock)
         }
 
         // Fill in merkle branch
-        vMerkleBranch = pblock->GetMerkleBranch(nIndex);
+        vMerkleBranch = BlockMerkleBranch(*pblock, nIndex); // pblock->GetMerkleBranch(nIndex);
     }
 
     // Is the tx in a block that's in the main chain
@@ -783,6 +794,14 @@ int64_t CMerkleTx::SetMerkleBranch(const CBlock* pblock)
     return chainActive.Height() - pindex->nHeight + 1;
 }
 
+void CMerkleTx::SetMerkleBranch(const CBlockIndex* pindex, int posInBlock)
+{
+    // Update the tx's hashBlock
+    hashBlock = pindex->GetBlockHash();
+
+    // set the position of the transaction in the block
+    nIndex = posInBlock;
+}
 
 
 bool CheckTransaction(const CTransaction& tx, CValidationState &state)
@@ -1032,6 +1051,33 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     return true;
 }
 
+#if 0
+
+/** (try to) add transaction to memory pool with a specified acceptance time **/
+static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
+    bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
+    bool fOverrideMempoolLimit, const int64_t nAbsurdFee)
+{
+    std::vector<COutPoint> coins_to_uncache;
+    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, nAcceptTime, plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee, coins_to_uncache);
+    if (!res) {
+        for (const COutPoint& hashTx : coins_to_uncache)
+            pcoinsTip->Uncache(hashTx);
+    }
+    // After we've (potentially) uncached entries, ensure our coins cache is still within its size limits
+    CValidationState stateDummy;
+    FlushStateToDisk(chainparams, stateDummy, FLUSH_STATE_PERIODIC);
+    return res;
+}
+
+bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
+    bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced,
+    bool fOverrideMempoolLimit, const int64_t nAbsurdFee)
+{
+    const CChainParams& chainparams = Params();
+    return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, GetTime(), plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee);
+}
+
 
 int64_t CMerkleTx::GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const
 {
@@ -1052,7 +1098,7 @@ int64_t CMerkleTx::GetDepthInMainChainINTERNAL(CBlockIndex* &pindexRet) const
     // Make sure the merkle branch connects to this block
     if (!fMerkleVerified)
     {
-        if (CBlock::CheckMerkleBranch(GetHash(), vMerkleBranch, nIndex) != pindex->hashMerkleRoot) {
+        if (ComputeMerkleRootFromBranch(GetHash(), vMerkleBranch, nIndex) != pindex->hashMerkleRoot) {
             return 0;
         }
         fMerkleVerified = true;
@@ -1081,6 +1127,7 @@ int CMerkleTx::GetBlocksToMaturity() const
     return max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
 }
 
+#else
 
 bool CMerkleTx::AcceptToMemoryPool(bool fLimitFree)
 {
@@ -1088,6 +1135,33 @@ bool CMerkleTx::AcceptToMemoryPool(bool fLimitFree)
     return ::AcceptToMemoryPool(mempool, state, *this, fLimitFree, NULL);
 }
 
+int CMerkleTx::GetDepthInMainChain(const CBlockIndex* &pindexRet) const
+{
+    if (hashUnset())
+        return 0;
+
+    AssertLockHeld(cs_main);
+
+    // Find the block it claims to be in
+    map<uint320, CBlockIndex*>::iterator mi = mapBlockIndex.find(hashBlock);
+    if (mi == mapBlockIndex.end())
+        return 0;
+    CBlockIndex* pindex = (*mi).second;
+    if (!pindex || !chainActive.Contains(pindex))
+        return 0;
+
+    pindexRet = pindex;
+    return ((nIndex == -1) ? (-1) : 1) * (chainActive.Height() - pindex->nHeight + 1);
+}
+
+int CMerkleTx::GetBlocksToMaturity() const
+{
+    if (!IsCoinBase())
+        return 0;
+    return std::max(0, (COINBASE_MATURITY + 1) - GetDepthInMainChain());
+}
+
+#endif
 
 // Return transaction in tx, and if it was found inside a block, its hash is placed in hashBlock
 bool GetTransaction(const uint320 &hash, CTransaction &txOut, uint320 &hashBlock, bool fAllowSlow)
@@ -3071,7 +3145,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bo
     // Build the merkle tree already. We need it anyway later, and it makes the
     // block cache the transaction hashes, which means they don't need to be
     // recalculated many times during this block's validation.
-    block.BuildMerkleTree();
+    BlockMerkleRoot(block);
 
     // Check for duplicate txids. This is caught by ConnectInputs(),
     // but catching it earlier avoids a potential DoS attack:
@@ -3336,7 +3410,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
                 CDataStream ss(mi->second->vchBlock, SER_DISK, CLIENT_VERSION);
                 ss >> block;
             }
-            block.BuildMerkleTree();
+            BlockMerkleRoot(block);
             // Use a dummy CValidationState so someone can't setup nodes to counter-DoS based on orphan resolution (that is, feeding people an invalid block based on LegitBlockX in order to get anyone relaying LegitBlockX banned)
             CValidationState stateDummy;
             if (AcceptBlock(block, stateDummy)) {

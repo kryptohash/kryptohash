@@ -266,6 +266,7 @@ uint320 CBlockHeader::GetKryptoHash() const
     return KSHAKE320(BEGIN(nVersion), END(nNonce));
 }
 
+#if 0
 uint320 CBlock::BuildMerkleTree() const
 {
     vMerkleTree.clear();
@@ -320,15 +321,16 @@ uint320 CBlock::CheckMerkleBranch(uint320 hash, const std::vector<uint320>& vMer
     }
     return hash;
 }
+#endif
 
 void CBlock::print() const
 {
-    LogPrintf("CBlock(hash=%s, ver=%d, zonesMask=%s, hashPrevBlock=%s, hashMerkleRoot=%s, nTxTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
+    LogPrintf("CBlock(hash=%s, ver=%d, hashPrevBlock=%s, hashMerkleRoot=%s, zonesMask=0x%x, nTxTime=%u, nBits=%08x, nNonce=%u, vtx=%u, vchBlockSig=%s)\n",
                 GetHash().ToString(),
                 nVersion,
-                nZonesMask.ToString(),
                 hashPrevBlock.ToString(),
                 hashMerkleRoot.ToString(),
+                maskZones,
                 nTxTime, nBits, nNonce,
                 vtx.size(),
                 HexStr(vchBlockSig.begin(), vchBlockSig.end()).c_str());
